@@ -7,7 +7,7 @@ import logger from "../logger";
 let client: MongoClient;
 let tasksCollection: Collection<Task> | undefined;
 
-enum TaskStatus {
+enum taskStatus {
   AVAILABLE = "AVAILABLE",
   INPROGRESS = "INPROGRESS",
   COMPLETED = "COMPLETED",
@@ -19,7 +19,7 @@ interface Task {
   location: string;
   pay: number;
   timeInMins: number;
-  status: TaskStatus;
+  status: taskStatus;
 }
 
 async function initialize(
@@ -120,7 +120,7 @@ async function getSingleTask(name: string): Promise<Task> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValid(name, "validDescription", "montreal", 1, 1, TaskStatus.AVAILABLE); //calling to see if name is valid, other parameters are dummy and not used in validation
+    isValid(name, "validDescription", "montreal", 1, 1, taskStatus.AVAILABLE); //calling to see if name is valid, other parameters are dummy and not used in validation
     const match = await tasksCollection.findOne<Task>({ name: name });
     if (!match) {
       throw new DatabaseError("Find result was null");
@@ -257,7 +257,7 @@ async function deleteTask(name: string): Promise<void> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValid(name, "validDescription", "montreal", 1, 1, TaskStatus.AVAILABLE); // Validate name, other parameters are dummy
+    isValid(name, "validDescription", "montreal", 1, 1, taskStatus.AVAILABLE); // Validate name, other parameters are dummy
     const result = await tasksCollection.deleteOne({ name });
     if (result.deletedCount === 0) {
       throw new DatabaseError(
@@ -302,4 +302,4 @@ export {
   deleteTask,
   close,
 };
-export type { Task, TaskStatus as Status };
+export type { Task, taskStatus as Status };
