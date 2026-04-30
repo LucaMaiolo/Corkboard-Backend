@@ -78,24 +78,5 @@ function refreshSession(request: Request, response: Response): string | undefine
     return newSessionId;
 } 
 
-router.get('/logout', logoutUser);
-function logoutUser(request: Request, response: Response): void {
-    const authenticatedUser = authenticateUser(request);
-
-    if (! authenticatedUser) {
-        response.sendStatus(401); // Unauthorized access
-        return;
-    }
-
-    // Delete the session from the session store
-    deleteSession(authenticatedUser.sessionId);
-    console.log("Logged out user " + authenticatedUser.userSession.username);
-
-    // Clear cookie
-    response.clearCookie("sessionId");
-
-    // Redirect to the home page or another route
-    response.redirect('/');
-}
-
-  export { router, routeRoot, loginUser, authenticateUser, refreshSession, logoutUser};
+  
+  export { router, routeRoot, loginUser, authenticateUser, refreshSession };

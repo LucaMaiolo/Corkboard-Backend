@@ -1,11 +1,8 @@
 import express, { Request, Response, Router } from "express";
-import { createSession, getSession, deleteSession, Session } from "./Session.js"; 
+import { Session, createSession, getSession, deleteSession } from "./session.js"; 
 const router: Router = express.Router();
 const routeRoot: string = "/session";
-interface AuthenticatedUser {
-    sessionId: string;
-    userSession: Session;
-  }
+
 
 router.get("/login", loginUser)
 /** Log a user in and create a session cookie that will expire in 2 minutes */
@@ -29,7 +26,10 @@ function loginUser(request: Request, response: Response): void {
   }
 
 
- 
+  interface AuthenticatedUser {
+    sessionId: string;
+    userSession: Session;
+  }
   function authenticateUser(request: Request): AuthenticatedUser | null {
     // If this request doesn't have any cookies, that means it isn't authenticated. Return null.
     if (!request.cookies) {
@@ -52,10 +52,7 @@ function loginUser(request: Request, response: Response): void {
     }
     return { sessionId, userSession }; // Successfully validated
   }
-
-
-
-function refreshSession(request: Request, response: Response): string | undefined {
+  function refreshSession(request: Request, response: Response): string | undefined {
     const authenticatedUser = authenticateUser(request);
 
     if (!authenticatedUser) {
@@ -78,24 +75,5 @@ function refreshSession(request: Request, response: Response): string | undefine
     return newSessionId;
 } 
 
-router.get('/logout', logoutUser);
-function logoutUser(request: Request, response: Response): void {
-    const authenticatedUser = authenticateUser(request);
-
-    if (! authenticatedUser) {
-        response.sendStatus(401); // Unauthorized access
-        return;
-    }
-
-    // Delete the session from the session store
-    deleteSession(authenticatedUser.sessionId);
-    console.log("Logged out user " + authenticatedUser.userSession.username);
-
-    // Clear cookie
-    response.clearCookie("sessionId");
-
-    // Redirect to the home page or another route
-    response.redirect('/');
-}
-
-  export { router, routeRoot, loginUser, authenticateUser, refreshSession, logoutUser};
+  
+  export { router, routeRoot, loginUser, authenticateUser };
