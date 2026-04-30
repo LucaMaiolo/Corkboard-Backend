@@ -13,7 +13,6 @@ app.use(httpLogger);
 const controllers: string[] = [
   "homeController.js",
   "taskController.js",
-  "sessionController.js",
   "errorController.js",
 ];
 app.use(express.json());
