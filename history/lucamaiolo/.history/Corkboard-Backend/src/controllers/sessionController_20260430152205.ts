@@ -17,12 +17,13 @@ function loginUser(request: Request, response: Response): void {
     if (checkCredentials(username, password)){
         const sessionId: string = createSession(username, 2);
         const session = getSession(sessionId);
-        // Create a session object that will expire in 2 minutes
+            // Create a session object that will expire in 2 minutes
         if (!session) {
           response.status(500).send("Session creation failed.");
           return;
         }
-        // Save cookie that will expire.
+            // Save cookie that will expire.
+
         response.cookie("sessionId", sessionId, { expires: session.expiresAt, httpOnly: true });
 
     }else{
@@ -101,4 +102,4 @@ function logoutUser(request: Request, response: Response): void {
     response.redirect('/');
 }
 
-export { router, routeRoot, loginUser, authenticateUser, refreshSession, logoutUser};
+  export { router, routeRoot, loginUser, authenticateUser, refreshSession, logoutUser};
