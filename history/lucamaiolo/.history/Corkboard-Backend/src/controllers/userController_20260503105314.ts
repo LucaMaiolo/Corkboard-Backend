@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 
-const users: Record<string, string> = {};
+const users = []
 
 users['admin']='abcd1234' //admin account with password abcd1234
 users['aadi']='password123' //aadi account with password password123
@@ -44,4 +44,4 @@ async function registerUser(request:any, response:any): Promise<void> {
     }
 }
 
-export { router, routeRoot, registerUser, checkCredentials };
+module.exports = {router, routeRoot, registerUser, checkCredentials};

@@ -19,7 +19,6 @@ const controllers: string[] = [
   "errorController.js",
 ];
 app.use(express.json());
-app.use(cookieParser());
 async function registerControllers() {
   for (const controllerName of controllers) {
     try {
