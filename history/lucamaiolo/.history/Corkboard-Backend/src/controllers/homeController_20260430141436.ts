@@ -1,13 +1,12 @@
 import express from "express";
 import type { Request, Response } from "express";
-import { authenticateUser, refreshSession } from "./sessionController.js";
+import { authenticateUser } from "./sessionController.js";
 const router = express.Router();
 const routeRoot = "/";
 router.get("/", showHome);
 function showHome(request: Request, response: Response): void {
   const authenticatedUser = authenticateUser(request);
     if (!authenticatedUser) {
-      refreshSession(request, response);
       response.sendStatus(401); 
     return;
 }
