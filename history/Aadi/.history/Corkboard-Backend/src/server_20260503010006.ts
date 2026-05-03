@@ -1,10 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
 import * as model from "./models/taskModelMongoDb.js";
 import app from "./app.js";
+import dotenv from "dotenv";
+dotenv.config();
 const port: number = 1339;
 const url = `${process.env.URL_PRE}${process.env.MONGODB_PWD}${process.env.URL_POST}`;
-console.log("URL:", url);
 model
   .initialize("tasksDb", false, "tasks", url)
   .then(() => {
