@@ -10,9 +10,9 @@ const saltRounds = 10;
 const users = []
 
 users['admin']='abcd1234' //admin account with password abcd1234
-users['aadi']='GhaintJxtt4' //aadi account with password GhaintJxtt4
-users['luca']='ArberXhekaj#1Glazer' //luca account with password ArberXhekaj#1Glazer
-users['james']='xX_GrannyHunter69_Xx' //james account with password xX_GrannyHunter69_Xx
+users['aadi']='password123' //aadi account with password password123
+users['luca']='pass1234' //luca account with password pass1234
+users['james']='1234abcd' //james account with password 1234abcd
 
 function checkCredentials(username:string, password:string):boolean {
     if (users[username] && users[username] === password) {

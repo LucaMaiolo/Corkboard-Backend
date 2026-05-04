@@ -1,8 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT:', err);
-    process.exit(1);
-  });
+
 
  class Session {
     username: string;

@@ -18,13 +18,12 @@
   "start": "node --import tsx/esm src/server.ts",
   "dev": "node --watch --import tsx/esm src/server.ts",
   "test": "echo \"Error: no test specified\" && exit 1"
-},
+},,
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
-    "@types/validator": "^13.15.10",
     "eslint": "^10.2.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
@@ -41,8 +40,6 @@
     "mongodb": "^7.2.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
-    "validator": "^13.15.35",
-    "vitest": "^4.1.5"
     "typescript": "^6.0.3",
     "uuid": "^14.0.0",
     "validator": "^13.15.35"

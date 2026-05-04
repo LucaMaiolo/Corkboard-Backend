@@ -9,24 +9,28 @@ interface AuthenticatedUser {
   }
 
 router.post("/login", loginUser)
-
+/** Log a user in and create a session cookie that will expire in 2 minutes */
 function loginUser(request: Request, response: Response): void {
+    // Let's assume successful login for now with placeholder username
     const username: string = request.body.username;
     const password: string = request.body.password;
 
-    if (checkCredentials(username, password)) {
+    if (checkCredentials(username, password)){
         const sessionId: string = createSession(username, 2);
         const session = getSession(sessionId);
+        // Create a session object that will expire in 2 minutes
         if (!session) {
           response.status(500).send("Session creation failed.");
           return;
         }
+        // Save cookie that will expire.
         response.cookie("sessionId", sessionId, { expires: session.expiresAt, httpOnly: true });
-        response.status(200).json( "Logged in successfully.");
-    } else {
+
+    }else{
         response.status(401).send("Invalid username or password.");
     }
-}
+    response.redirect("/");  
+  }
 
 
  

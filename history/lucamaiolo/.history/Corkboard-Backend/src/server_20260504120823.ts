@@ -1,5 +1,4 @@
 import * as taskModel from "./models/taskModelMongoDb.js";
-import "dotenv/config";
 import app from "./app.js";
 const port: number = 1339;
 const url = `${process.env.URL_PRE}${process.env.MONGODB_PWD}${process.env.URL_POST}`;

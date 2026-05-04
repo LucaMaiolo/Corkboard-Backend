@@ -22,7 +22,7 @@ function loginUser(request: Request, response: Response): void {
           return;
         }
         response.cookie("sessionId", sessionId, { expires: session.expiresAt, httpOnly: true });
-        response.status(200).json( "Logged in successfully.");
+        response.status(200).json({ message: "Logged in successfully." });
     } else {
         response.status(401).send("Invalid username or password.");
     }
