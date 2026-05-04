@@ -15,18 +15,16 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-  "start": "node --import tsx/esm src/server.ts",
-  "dev": "node --watch --import tsx/esm src/server.ts",
-  "test": "echo \"Error: no test specified\" && exit 1"
-},
+    "start": "node --loader ts-node/esm src/server.ts",
+    "dev": "node --watch --loader ts-node/esm src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
     "eslint": "^10.2.1",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
     "typescript-eslint": "^8.59.0"
   },
   "dependencies": {
