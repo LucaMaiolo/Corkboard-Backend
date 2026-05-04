@@ -2,7 +2,7 @@ import { MongoError, Db, MongoClient, Collection } from "mongodb";
 import { DatabaseError } from "./DatabaseError.js";
 import { InvalidInputError } from "./InvalidInputError.js";
 import { isValid } from "./validateUtils.js";
-import logger from "../logger";
+import logger from "../logger.js";
 
 let client: MongoClient;
 let tasksCollection: Collection<Task> | undefined;

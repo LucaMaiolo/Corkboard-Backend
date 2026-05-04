@@ -1,7 +1,7 @@
 import { MongoError, Db, MongoClient, Collection } from "mongodb";
-import { DatabaseError } from "./DatabaseError.js";
-import { InvalidInputError } from "./InvalidInputError.js";
-import { isValid } from "./validateUtils.js";
+import { DatabaseError } from "./DatabaseError";
+import { InvalidInputError } from "./InvalidInputError";
+import { isValid } from "./validateUtils";
 import logger from "../logger";
 
 let client: MongoClient;
