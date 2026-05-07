@@ -28,8 +28,8 @@ function createSession(username: string, numMinutes: number, isAdmin: boolean): 
   // Set the expiry time as numMinutes (in milliseconds) after the current time
   const expiresAt: Date = new Date(Date.now() + numMinutes * 60000);
 
-  // Create a session object containing information about the user and expiry time
-  const thisSession: Session = new Session(username, expiresAt, isAdmin);
+    // Create a session object containing information about the user and expiry time
+    const thisSession: Session = new Session(username, expiresAt, isAdmin);
 
   // Add the session information to the sessions map, using sessionId as the key
   sessions[sessionId] = thisSession;
