@@ -7,10 +7,12 @@ process.on('uncaughtException', (err) => {
  class Session {
     username: string;
     expiresAt: Date; 
+    password: string;
 
-    constructor(username: string, expiresAt: Date) {
+    constructor(username: string, expiresAt: Date, password: string) {
         this.username = username;
         this.expiresAt = expiresAt;
+        this.password = password;
     }
 
     isExpired(): boolean
@@ -29,7 +31,7 @@ const sessions: Record<string, Session> = {};
     const expiresAt: Date = new Date(Date.now() + numMinutes * 60000);
 
     // Create a session object containing information about the user and expiry time
-    const thisSession: Session = new Session(username, expiresAt); 
+    const thisSession: Session = new Session(username, expiresAt, password);
 
     // Add the session information to the sessions map, using sessionId as the key
     sessions[sessionId] = thisSession;
