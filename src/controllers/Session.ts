@@ -7,7 +7,6 @@ process.on("uncaughtException", (err) => {
 class Session {
   username: string;
   expiresAt: Date;
-  password?: string;
 
   constructor(username: string, expiresAt: Date) {
     this.username = username;

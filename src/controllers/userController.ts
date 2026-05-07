@@ -7,11 +7,6 @@ const saltRounds = 10;
 
 const users: Record<string, string> = {};
 
-users["admin"] = "abcd1234"; //admin account with password abcd1234
-users["aadi"] = "GhaintJxtt4"; //aadi account with password GhaintJxtt4
-users["luca"] = "ArberXhekaj#1Glazer"; //luca account with password ArberXhekaj#1Glazer
-users["james"] = "xX_GrannyHunter69_Xx"; //james account with password xX_GrannyHunter69_Xx
-
 function checkCredentials(username: string, password: string): boolean {
   if (users[username] && users[username] === password) {
     return true;
