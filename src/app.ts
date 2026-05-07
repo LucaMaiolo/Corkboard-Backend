@@ -9,7 +9,7 @@ const app = express();
 const httpLogger = pinoHttp({
   logger: logger,
 });
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5174", credentials: true }));
 app.use(httpLogger);
 // errorController must always be last in this list
 const controllers: string[] = [
