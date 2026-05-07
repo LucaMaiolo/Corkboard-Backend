@@ -37,9 +37,10 @@
     "jsx": "react-jsx",
     // "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "src/server.ts"]
+  "include": ["src/**/*.ts", "dist/server.ts"]
 }
