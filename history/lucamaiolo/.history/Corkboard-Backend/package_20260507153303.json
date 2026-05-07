@@ -15,8 +15,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node --import tsx/esm src/server.ts",
-    "dev": "node --watch --import tsx/esm src/server.ts",
+    "start": "node --import tsx/esm dist/erver.ts",
+    "dev": "node --watch --import tsx/esm dist/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
