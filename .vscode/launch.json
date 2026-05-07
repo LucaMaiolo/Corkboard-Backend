@@ -9,8 +9,9 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}\\dist\\server.js",
-      "outFiles": ["${workspaceFolder}/**/*.js"]
+      "runtimeArgs": ["--import", "tsx/esm"],
+      "program": "${workspaceFolder}/src/server.ts",
+      "env": { "NODE_OPTIONS": "" }
     }
   ]
 }
