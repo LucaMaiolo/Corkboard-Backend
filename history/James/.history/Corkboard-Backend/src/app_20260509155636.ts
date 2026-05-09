@@ -9,7 +9,6 @@ const app = express();
 const httpLogger = pinoHttp({
   logger: logger,
 });
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(httpLogger);
 // errorController must always be last in this list
