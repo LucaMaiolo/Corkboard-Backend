@@ -100,7 +100,7 @@ async function updateUser(request: Request, response: Response): Promise<void> {
     return;
   }
 
-  if (authenticatedUser.userSession.username !== request.params.username) {
+  if (authenticatedUser.userSession.username !== request.params.username || !authenticatedUser.userSession.isAdmin) {
     response.sendStatus(403);
     return;
   }
