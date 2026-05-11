@@ -1,7 +1,7 @@
 import { MongoError, Db, MongoClient, Collection } from "mongodb";
 import { DatabaseError } from "./DatabaseError.js";
 import { InvalidInputError } from "./InvalidInputError.js";
-import { isValidTask } from "./validateUtils.js";
+import { isValidTask as isValid } from "./validateUtils.js";
 import logger from "../logger.js";
 
 let client: MongoClient;
@@ -14,6 +14,7 @@ enum TaskStatus {
 }
 
 interface Task {
+  id: string;
   name: string;
   description: string;
   location: string;
@@ -74,7 +75,7 @@ async function addTask(task: Task): Promise<Task> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValidTask(
+    isValid(
       task.name,
       task.description,
       task.location,
@@ -120,14 +121,7 @@ async function getSingleTask(name: string): Promise<Task> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValidTask(
-      name,
-      "validDescription",
-      "montreal",
-      1,
-      1,
-      TaskStatus.AVAILABLE,
-    ); //calling to see if name is valid, other parameters are dummy and not used in validation
+    isValid(name, "validDescription", "montreal", 1, 1, TaskStatus.AVAILABLE); //calling to see if name is valid, other parameters are dummy and not used in validation
     const match = await tasksCollection.findOne<Task>({ name: name });
     if (!match) {
       throw new DatabaseError("Find result was null");
@@ -202,7 +196,7 @@ async function updateTask(oldName: string, task: Task): Promise<Task> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValidTask(
+    isValid(
       task.name,
       task.description,
       task.location,
@@ -264,14 +258,7 @@ async function deleteTask(name: string): Promise<void> {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    isValidTask(
-      name,
-      "validDescription",
-      "montreal",
-      1,
-      1,
-      TaskStatus.AVAILABLE,
-    ); // Validate name, other parameters are dummy
+    isValid(name, "validDescription", "montreal", 1, 1, TaskStatus.AVAILABLE); // Validate name, other parameters are dummy
     const result = await tasksCollection.deleteOne({ name });
     if (result.deletedCount === 0) {
       throw new DatabaseError(
