@@ -7,11 +7,12 @@ process.on("uncaughtException", (err) => {
 class Session {
   username: string;
   expiresAt: Date;
-  password?: string;
+  isAdmin: boolean;
 
-  constructor(username: string, expiresAt: Date) {
+  constructor(username: string, expiresAt: Date, isAdmin: boolean) {
     this.username = username;
     this.expiresAt = expiresAt;
+    this.isAdmin = isAdmin;
   }
 
   isExpired(): boolean {
@@ -20,7 +21,7 @@ class Session {
 }
 const sessions: Record<string, Session> = {};
 
-function createSession(username: string, numMinutes: number): string {
+function createSession(username: string, numMinutes: number, isAdmin: boolean): string {
   // Generate a random UUID as the sessionId
   const sessionId: string = uuidv4();
 
@@ -28,7 +29,7 @@ function createSession(username: string, numMinutes: number): string {
   const expiresAt: Date = new Date(Date.now() + numMinutes * 60000);
 
   // Create a session object containing information about the user and expiry time
-  const thisSession: Session = new Session(username, expiresAt);
+  const thisSession: Session = new Session(username, expiresAt, isAdmin);
 
   // Add the session information to the sessions map, using sessionId as the key
   sessions[sessionId] = thisSession;

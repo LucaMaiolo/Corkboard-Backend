@@ -1,4 +1,5 @@
 import * as taskModel from "./models/taskModelMongoDb.js";
+import * as userModel from "./models/userModelMongoDb.js";
 import * as offerModel from "./models/offerModelMongoDb.js";
 import "dotenv/config";
 import process from "process";
@@ -8,6 +9,7 @@ const url = `${process.env.URL_PRE}${process.env.MONGODB_PWD}${process.env.URL_P
 try {
   await Promise.all([
     taskModel.initialize("Corkboard", false, "Tasks", url),
+    userModel.initialize("Corkboard", false, "Users", url),
     offerModel.initialize("Corkboard", false, "Offers", url),
   ]);
   app.listen(port, () => {
