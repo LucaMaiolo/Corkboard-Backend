@@ -141,27 +141,6 @@ async function getAllTasks(): Promise<WithId<Task>[]> {
 }
 
 /**
- * finds and returns the task with the given mongodb `_id`.
- *
- * @param id - the ObjectId of the task to retrieve.
- * @returns the task document.
- * @throws {DatabaseError} if no task is found or a db error occurs.
- */
-async function getTaskById(id: ObjectId): Promise<WithId<Task>> {
-  if (!tasksCollection) throw new DatabaseError("Collection not initialized");
-  try {
-    const match = await tasksCollection.findOne({ _id: id });
-    if (!match) throw new DatabaseError("Task not found");
-    return match;
-  } catch (err: unknown) {
-    if (err instanceof DatabaseError) throw err;
-    else if (err instanceof MongoError) throw new DatabaseError("Database operation failed");
-    else if (err instanceof Error) throw new DatabaseError("An unexpected error occurred");
-    else throw new DatabaseError("An unknown error occurred in getTaskById. Should not happen");
-  }
-}
-
-/**
  * Updates the task with the name `oldName` to have the properties of the given `task`.
  *
  * @param oldName - the name of the task to be updated.
@@ -284,7 +263,6 @@ export {
   initialize,
   addTask,
   getAllTasks,
-  getTaskById,
   updateTask,
   deleteTask,
   close,
