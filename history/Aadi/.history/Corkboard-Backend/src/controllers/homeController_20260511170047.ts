@@ -7,6 +7,7 @@ router.get("/", showHome);
 function showHome(request: Request, response: Response): void {
   const authenticatedUser = authenticateUser(request);
   if (!authenticatedUser) {
+    refreshSession(request, response);
     response.sendStatus(401);
     return;
   }
@@ -14,9 +15,11 @@ function showHome(request: Request, response: Response): void {
     `User ${authenticatedUser.userSession.username} is authorized for home page`,
   );
 
-  response.status(200).json({
-    message: "Welcome!",
-    username: authenticatedUser.userSession.username,
-  });
+  response
+    .status(200)
+    .json({
+      message: "Welcome!",
+      username: authenticatedUser.userSession.username,
+    });
 }
 export { router, routeRoot };
