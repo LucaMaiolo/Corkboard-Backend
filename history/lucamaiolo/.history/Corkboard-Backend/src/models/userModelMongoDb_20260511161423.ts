@@ -300,7 +300,6 @@ async function deleteUser(username: string): Promise<void>{
 }
 
 async function checkCredentials(username: string, password: string): Promise<boolean>{
-    username = username.toLowerCase();
 
     if(!usersCollection)
     {
