@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { checkCredentials, getSingleUser } from "../models/userModelMongoDb.js";
-import { createSession, getSession, deleteSession, Session } from "./Session.js"; 
+import { createSession, getSession, deleteSession, Session } from "./Session.js";
 const router: Router = express.Router();
 const routeRoot: string = "/session";
 interface AuthenticatedUser {
@@ -34,29 +34,29 @@ async function loginUser(request: Request, response: Response): Promise<void> {
 }
 
 
- 
-  function authenticateUser(request: Request): AuthenticatedUser | null {
-    // If this request doesn't have any cookies, that means it isn't authenticated. Return null.
-    if (!request.cookies) {
-      return null;
-    }
-    // We can obtain the session token from the requests cookies, which come with every request
-    const sessionId = request.cookies['sessionId'];
-    if (!sessionId) {  // If the cookie is not set, return null
-      return null;
-    }
-    // We then get the session of the user from our session map
-    const userSession = getSession(sessionId);
-    if (!userSession) {
-      return null;
-    }
-    // If the session has expired, delete the session from our map and return null
-    if (userSession.isExpired()) {
-      deleteSession(sessionId);
-      return null;
-    }
-    return { sessionId, userSession }; // Successfully validated
+
+function authenticateUser(request: Request): AuthenticatedUser | null {
+  // If this request doesn't have any cookies, that means it isn't authenticated. Return null.
+  if (!request.cookies) {
+    return null;
   }
+  // We can obtain the session token from the requests cookies, which come with every request
+  const sessionId = request.cookies['sessionId'];
+  if (!sessionId) {  // If the cookie is not set, return null
+    return null;
+  }
+  // We then get the session of the user from our session map
+  const userSession = getSession(sessionId);
+  if (!userSession) {
+    return null;
+  }
+  // If the session has expired, delete the session from our map and return null
+  if (userSession.isExpired()) {
+    deleteSession(sessionId);
+    return null;
+  }
+  return { sessionId, userSession }; // Successfully validated
+}
 
 
 
@@ -75,14 +75,24 @@ function refreshSession(request: Request, response: Response): string | undefine
 
     const newSession = getSession(newSessionId);
     // If session is undefined (shouldn't happen, but just in case), clear out cookie
-    if (!newSession) {   
+    if (!newSession) {
         response.clearCookie("sessionId"); // essentially the user is no longer authenticated
     } else {
         // Set the session cookie to the new id we generated, with a renewed expiration time
         response.cookie("sessionId", newSessionId, { expires: newSession.expiresAt, httpOnly: true });
     }
     return newSessionId;
-} 
+}
+
+router.get("/current", getCurrentUser);
+function getCurrentUser(request: Request, response: Response): void {
+  const authenticatedUser = authenticateUser(request);
+  if (authenticatedUser === null) {
+    response.status(401).send("Not logged in");
+    return;
+  }
+  response.status(200).json({ username: authenticatedUser.userSession.username });
+}
 
 router.get('/logout', logoutUser);
 function logoutUser(request: Request, response: Response): void {
