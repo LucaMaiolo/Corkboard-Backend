@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response, Router } from "express";
+import express, { Request, Response, Router } from "express";
 import { checkCredentials, getSingleUser } from "../models/userModelMongoDb.js";
 import {
   createSession,
@@ -130,17 +130,11 @@ function logoutUser(request: Request, response: Response): void {
   response.redirect("/");
 }
 
-const refreshSessionMiddleware = (request: Request, response: Response, next: NextFunction): void => {
-  const authenticatedUser = authenticateUser(request);
-  if (authenticatedUser !== null) {
-    const newSessionId = createSession(authenticatedUser.userSession.username, 2, authenticatedUser.userSession.isAdmin);
-    deleteSession(authenticatedUser.sessionId);
-    const newSession = getSession(newSessionId);
-    if (newSession) {
-      response.cookie("sessionId", newSessionId, { expires: newSession.expiresAt, httpOnly: true });
-    }
-  }
-  next();
+export {
+  router,
+  routeRoot,
+  loginUser,
+  authenticateUser,
+  refreshSession,
+  logoutUser,
 };
-
-export { router, routeRoot, loginUser, authenticateUser, refreshSession, refreshSessionMiddleware, logoutUser};
