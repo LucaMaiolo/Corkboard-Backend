@@ -245,12 +245,20 @@ async function updateTask(
  * @throws {InvalidInputError} Throws if the name is invalid
  * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with the given name.
  */
-async function deleteTask(id: ObjectId): Promise<void> {
+async function deleteTask(name: string): Promise<void> {
   if (!tasksCollection) {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    const result = await tasksCollection.deleteOne({ _id: id });
+    isValidTask(
+      name,
+      "validDescription",
+      "montreal",
+      1,
+      1,
+      TaskStatus.AVAILABLE,
+    ); // Validate name, other parameters are dummy
+    const result = await tasksCollection.deleteOne({ name });
     if (result.deletedCount === 0) {
       throw new DatabaseError(
         "Delete failed, no task found with the given name",

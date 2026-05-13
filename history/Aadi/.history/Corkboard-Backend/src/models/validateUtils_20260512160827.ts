@@ -29,7 +29,7 @@ function isValidTask(
   if (!name || !validator.isAlpha(name, "en-US", { ignore: " " })) {
     throw new InvalidInputError("Invalid name");
   }
-  if (!description || !validator.isLength(description, { min: 5 })) {
+  if (!description || !validator.isLength(description, { min: 5, max: 200 })) {
     throw new InvalidInputError("Invalid description");
   }
   if (!location || !validator.isLength(location)) {
