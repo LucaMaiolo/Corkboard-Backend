@@ -67,7 +67,7 @@ function isValidUser(
   if (!email || !validator.isEmail(email)) {
     throw new InvalidInputError("Invalid email");
   }
-  if (!birthday ){
+  if (!birthday || !validator.isDate(birthday.toISOString())) {
     throw new InvalidInputError("Invalid birthday");
   }
 

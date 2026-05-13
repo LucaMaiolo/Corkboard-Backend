@@ -26,7 +26,7 @@ function isValidTask(
   TimeInMins: number,
   status: Status,
 ) {
-  if (!name || !validator.isAlpha(name, "en-US", { ignore: " " })) {
+  if (!name || !validator.isAlpha(name)) {
     throw new InvalidInputError("Invalid name");
   }
   if (!description || !validator.isLength(description, { min: 5, max: 200 })) {
@@ -67,7 +67,7 @@ function isValidUser(
   if (!email || !validator.isEmail(email)) {
     throw new InvalidInputError("Invalid email");
   }
-  if (!birthday ){
+  if (!birthday || !validator.isDate(birthday.toISOString())) {
     throw new InvalidInputError("Invalid birthday");
   }
 

@@ -1,4 +1,4 @@
-import { MongoError, Db, MongoClient, Collection, ObjectId, WithId } from "mongodb";
+import { MongoError, Db, MongoClient, Collection } from "mongodb";
 import { DatabaseError } from "./DatabaseError.js";
 import { InvalidInputError } from "./InvalidInputError.js";
 import { isValidTask } from "./validateUtils.js";
@@ -14,7 +14,6 @@ enum TaskStatus {
 }
 
 interface Task {
-  listerId: string;
   name: string;
   description: string;
   location: string;
@@ -70,7 +69,7 @@ async function initialize(
     }
   }
 }
-async function addTask(task: Task): Promise<WithId<Task>> {
+async function addTask(task: Task): Promise<Task> {
   if (!tasksCollection) {
     throw new DatabaseError("Collection not initialized");
   }
@@ -83,8 +82,8 @@ async function addTask(task: Task): Promise<WithId<Task>> {
       task.timeInMins,
       task.status,
     );
-    const result = await tasksCollection.insertOne(task);
-    return { ...task, _id: result.insertedId };
+    await tasksCollection.insertOne(task);
+    return task;
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
       logger.warn("Invalid input: " + err.message);
@@ -108,18 +107,67 @@ async function addTask(task: Task): Promise<WithId<Task>> {
 }
 
 /**
+ * finds and returns the `task` with the given `name` from the MongoDb collection.
+ * The `name` must pass validation.
+ *
+ * @param name - the name of the task to be retrieved.
+ * @returns - the task with the given name.
+ * @throws {InvalidInputError} Throws if the name is invalid
+ * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with the given name.
+ */
+async function getSingleTask(name: string): Promise<Task> {
+  if (!tasksCollection) {
+    throw new DatabaseError("Collection not initialized");
+  }
+  try {
+    isValidTask(
+      name,
+      "validDescription",
+      "montreal",
+      1,
+      1,
+      TaskStatus.AVAILABLE,
+    ); //calling to see if name is valid, other parameters are dummy and not used in validation
+    const match = await tasksCollection.findOne<Task>({ name: name });
+    if (!match) {
+      throw new DatabaseError("Find result was null");
+    }
+    return match;
+  } catch (err: unknown) {
+    if (err instanceof InvalidInputError) {
+      logger.warn("Invalid input: " + err.message);
+      throw err;
+    } else if (err instanceof MongoError) {
+      logger.error("MongoDB error: " + err.message);
+      throw new DatabaseError("Database operation failed");
+    } else if (err instanceof DatabaseError) {
+      logger.error("Database error: " + err.message);
+      throw err;
+    } else if (err instanceof Error) {
+      logger.error("Unexpected error: " + err.message);
+      throw new DatabaseError("An unexpected error occurred");
+    } else {
+      logger.error("Unknown error");
+      throw new DatabaseError(
+        "An unknown error occurred in getSingleTask. Should not happen",
+      );
+    }
+  }
+}
+
+/**
  * finds and returns an array of all `task`s in the MongoDb collection.
  *
  * @returns an array of all tasks in the MongoDb collection.
  * @throws {DatabaseError} Throws if there is an error during database operation.
  */
-async function getAllTasks(): Promise<WithId<Task>[]> {
+async function getAllTasks(): Promise<Task[]> {
   if (!tasksCollection) {
     throw new DatabaseError("Collection not initialized");
   }
   try {
-    const cursor = tasksCollection.find({});
-    const allTask: WithId<Task>[] = await cursor.toArray();
+    const cursor = await tasksCollection.find<Task>({});
+    const allTask: Task[] = await cursor.toArray();
     return allTask;
   } catch (err: unknown) {
     if (err instanceof MongoError) {
@@ -141,27 +189,6 @@ async function getAllTasks(): Promise<WithId<Task>[]> {
 }
 
 /**
- * finds and returns the task with the given mongodb `_id`.
- *
- * @param id - the ObjectId of the task to retrieve.
- * @returns the task document.
- * @throws {DatabaseError} if no task is found or a db error occurs.
- */
-async function getTaskById(id: ObjectId): Promise<WithId<Task>> {
-  if (!tasksCollection) throw new DatabaseError("Collection not initialized");
-  try {
-    const match = await tasksCollection.findOne({ _id: id });
-    if (!match) throw new DatabaseError("Task not found");
-    return match;
-  } catch (err: unknown) {
-    if (err instanceof DatabaseError) throw err;
-    else if (err instanceof MongoError) throw new DatabaseError("Database operation failed");
-    else if (err instanceof Error) throw new DatabaseError("An unexpected error occurred");
-    else throw new DatabaseError("An unknown error occurred in getTaskById. Should not happen");
-  }
-}
-
-/**
  * Updates the task with the name `oldName` to have the properties of the given `task`.
  *
  * @param oldName - the name of the task to be updated.
@@ -170,7 +197,7 @@ async function getTaskById(id: ObjectId): Promise<WithId<Task>> {
  * @throws {InvalidInputError} Throws if any input is invalid
  * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with given name.
  */
-async function updateTask(oldName: string, task: Omit<Task, "listerId">): Promise<WithId<Task>> {
+async function updateTask(oldName: string, task: Task): Promise<Task> {
   if (!tasksCollection) {
     throw new DatabaseError("Collection not initialized");
   }
@@ -202,7 +229,7 @@ async function updateTask(oldName: string, task: Omit<Task, "listerId">): Promis
         "Update failed, no task found with the given name",
       );
     }
-    return result;
+    return result as Task;
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
       logger.warn("Invalid input: " + err.message);
@@ -283,8 +310,8 @@ async function close(): Promise<void> {
 export {
   initialize,
   addTask,
+  getSingleTask,
   getAllTasks,
-  getTaskById,
   updateTask,
   deleteTask,
   close,
