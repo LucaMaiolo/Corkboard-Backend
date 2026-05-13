@@ -84,7 +84,7 @@ async function getAllTasks(
   }
 }
 
-router.get("/:id", getTaskById);
+router.get("/id/:id", getTaskById);
 
 /**
  * GET /id/:id — fetch a single task by its MongoDB ObjectId.
@@ -138,7 +138,7 @@ async function getTaskById(
  *
  */
 
-router.put("/:id", updateTask);
+router.put("/:name", updateTask);
 async function updateTask(request: Request, response: Response): Promise<void> {
   let id: ObjectId;
   try {
@@ -158,7 +158,9 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     });
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof DatabaseError) {
+    if (error instanceof InvalidInputError) {
+      response.status(400).send("Invalid input:" + error.message);
+    } else if (error instanceof DatabaseError) {
       if (
         error.message.includes("Update failed, no task found with the given id")
       ) {
@@ -185,18 +187,12 @@ async function updateTask(request: Request, response: Response): Promise<void> {
  *  404 if no task with the given name is found
  *  500 if an unexpected error occurs
  */
-router.delete("/:id", deleteTask);
+router.delete("/:name", deleteTask);
 async function deleteTask(request: Request, response: Response): Promise<void> {
-  let id: ObjectId;
   try {
-    id = new ObjectId(request.params.id as string);
-  } catch {
-    response.status(400).send("Invalid id");
-    return;
-  }
-  try {
-    await model.deleteTask(id);
-    response.status(200).send(`Task deleted: id=${request.params.id}`);
+    const name = request.params.name as string;
+    await model.deleteTask(name);
+    response.status(200).send(`Task deleted: name=${name}`);
   } catch (error: unknown) {
     if (error instanceof InvalidInputError) {
       response.status(400).send("Invalid input:" + error.message);

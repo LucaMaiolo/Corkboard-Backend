@@ -84,7 +84,7 @@ async function getAllTasks(
   }
 }
 
-router.get("/:id", getTaskById);
+router.get("/id/:id", getTaskById);
 
 /**
  * GET /id/:id — fetch a single task by its MongoDB ObjectId.
@@ -158,7 +158,9 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     });
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof DatabaseError) {
+    if (error instanceof InvalidInputError) {
+      response.status(400).send("Invalid input:" + error.message);
+    } else if (error instanceof DatabaseError) {
       if (
         error.message.includes("Update failed, no task found with the given id")
       ) {

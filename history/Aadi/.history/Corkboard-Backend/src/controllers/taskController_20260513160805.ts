@@ -84,7 +84,7 @@ async function getAllTasks(
   }
 }
 
-router.get("/:id", getTaskById);
+router.get("/id/:id", getTaskById);
 
 /**
  * GET /id/:id — fetch a single task by its MongoDB ObjectId.
