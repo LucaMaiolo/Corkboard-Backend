@@ -54,32 +54,6 @@ const getOffersByGig = async (request: Request<Record<string, never>, unknown, u
 router.get("/", getOffersByGig);
 
 /**
- * retrieves all offers submitted by the currently logged-in user.
- * @param request - session cookie identifies the user
- * @param response - 200 with array of offers, 401 if not logged in, 500 on error
- */
-const getMyOffers = async (request: Request, response: Response): Promise<void> => {
-  const auth = authenticateUser(request);
-  if (auth === null) {
-    response.status(401).send("Unauthorized");
-    return;
-  }
-  try {
-    const result = await offerModel.getOffersByUser(auth.userSession.username);
-    response.status(200).json(result);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error: ${error.message}`);
-    } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
-    } else {
-      response.status(500).send("Unexpected error occurred");
-    }
-  }
-};
-router.get("/myOffers", getMyOffers);
-
-/**
  * accepts an offer and declines all other pending offers on the same gig.
  * @param request - request.params.id is the uuid of the offer to accept
  * @param response - 200 with the gigId on success, 500 on db/unexpected error
