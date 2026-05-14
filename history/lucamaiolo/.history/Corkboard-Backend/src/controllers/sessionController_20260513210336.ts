@@ -20,9 +20,9 @@ async function loginUser(request: Request, response: Response): Promise<void> {
   const password: string = request.body.password;
 
   console.log("Login attempt:", username, "password length:", password?.length);
-  const result = await checkCredentials(username, password);
-  console.log("checkCredentials result:", result);
-  if (result) {
+  if (await checkCredentials(username, password)) {
+    console.log("checkCredentials result:", result);
+
     const user = await getSingleUser(username);
     if (!user) {
       response.status(404).json({ message: "User not found." });

@@ -152,13 +152,6 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     response.status(400).send("Invalid id");
     return;
   }
-  const task = await model.getTaskById(id);
-  if (!task) { response.status(404).send("Task not found"); return; }
-
-  if (!auth.userSession.isAdmin && task.listerId !== auth.userSession.username) {
-    response.status(403).send("Forbidden");
-    return;
-  }
   try {
     const result = await model.updateTask(id, {
       name: request.body.name,
@@ -209,13 +202,6 @@ async function deleteTask(request: Request, response: Response): Promise<void> {
     id = new ObjectId(request.params.id as string);
   } catch {
     response.status(400).send("Invalid id");
-    return;
-  }
-  const task = await model.getTaskById(id);
-  if (!task) { response.status(404).send("Task not found"); return; }
-
-  if (!auth.userSession.isAdmin && task.listerId !== auth.userSession.username) {
-    response.status(403).send("Forbidden");
     return;
   }
   try {
