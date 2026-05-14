@@ -133,11 +133,6 @@ function getCurrentUser(request: Request, response: Response): void {
 }
 
 router.get("/logout", logoutUser);
-/**
- * logs out the current user by deleting their session and clearing the cookie.
- * @param request - must carry a valid `sessionId` cookie
- * @param response - redirects to `/` on success, 401 if not authenticated
- */
 function logoutUser(request: Request, response: Response): void {
   const authenticatedUser = authenticateUser(request);
 
@@ -157,13 +152,6 @@ function logoutUser(request: Request, response: Response): void {
   response.redirect("/");
 }
 
-/**
- * middleware that extends the session expiry on every authenticated request (sliding window).
- * passes through unauthenticated requests without blocking them.
- * @param request - incoming request
- * @param response - outgoing response; a refreshed cookie is set if the user is authenticated
- * @param next - calls the next middleware or route handler
- */
 const refreshSessionMiddleware = (request: Request, response: Response, next: NextFunction): void => {
   const authenticatedUser = authenticateUser(request);
   if (authenticatedUser !== null) {

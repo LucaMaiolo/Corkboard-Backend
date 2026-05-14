@@ -47,19 +47,10 @@ function createSession(username: string, numMinutes: number, isAdmin: boolean): 
   return sessionId;
 }
 
-/**
- * retrieves a session by its ID.
- * @param sessionId - the session ID to look up
- * @returns the session if found, undefined otherwise
- */
 function getSession(sessionId: string): Session | undefined {
   return sessions[sessionId];
 }
 
-/**
- * removes a session from the session map.
- * @param sessionId - the session ID to delete
- */
 function deleteSession(sessionId: string): void {
   delete sessions[sessionId];
 }
