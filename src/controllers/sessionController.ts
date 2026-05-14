@@ -8,6 +8,7 @@ import {
 } from "./Session.js";
 const router: Router = express.Router();
 const routeRoot: string = "/session";
+const SESSION_MINUTES = 10;
 interface AuthenticatedUser {
   sessionId: string;
   userSession: Session;
@@ -25,7 +26,7 @@ async function loginUser(request: Request, response: Response): Promise<void> {
       response.status(404).json({ message: "User not found." });
       return;
     }
-    const sessionId: string = createSession(username, 5, user.isAdmin);
+    const sessionId: string = createSession(username, SESSION_MINUTES, user.isAdmin);
     const session = getSession(sessionId);
     if (!session) {
       response.status(500).send("Session creation failed.");
@@ -78,7 +79,7 @@ function refreshSession(
   // Create and store a new Session object that will expire in 5 minutes.
   const newSessionId: string = createSession(
     authenticatedUser.userSession.username,
-    5,
+    SESSION_MINUTES,
     authenticatedUser.userSession.isAdmin,
   );
   // Delete the old entry in the session map
@@ -133,7 +134,7 @@ function logoutUser(request: Request, response: Response): void {
 const refreshSessionMiddleware = (request: Request, response: Response, next: NextFunction): void => {
   const authenticatedUser = authenticateUser(request);
   if (authenticatedUser !== null) {
-    const newSessionId = createSession(authenticatedUser.userSession.username, 2, authenticatedUser.userSession.isAdmin);
+    const newSessionId = createSession(authenticatedUser.userSession.username, SESSION_MINUTES, authenticatedUser.userSession.isAdmin);
     deleteSession(authenticatedUser.sessionId);
     const newSession = getSession(newSessionId);
     if (newSession) {
