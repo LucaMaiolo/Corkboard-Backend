@@ -105,7 +105,8 @@ async function updateUser(request: Request, response: Response): Promise<void> {
     return;
   }
 
-  const isAdmin = authenticatedUser.userSession.isAdmin;
+  const authenticatedUserData = await model.getSingleUser(authenticatedUser.userSession.username);
+const isAdmin = authenticatedUserData?.isAdmin ?? false;
 
 if (!isAdmin) {
   const currentPassword: string = request.body.currentPassword;

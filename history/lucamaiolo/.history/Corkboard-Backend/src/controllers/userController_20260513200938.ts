@@ -107,6 +107,7 @@ async function updateUser(request: Request, response: Response): Promise<void> {
 
   const isAdmin = authenticatedUser.userSession.isAdmin;
 
+
 if (!isAdmin) {
   const currentPassword: string = request.body.currentPassword;
   const isCorrect = await model.checkCredentials(request.params.username, currentPassword);
