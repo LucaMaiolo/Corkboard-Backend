@@ -29,7 +29,7 @@ function isValidTask(
   if (!name || !validator.isAlpha(name, "en-US", { ignore: " " })) {
     throw new InvalidInputError("Invalid name");
   }
-  if (!description || !validator.isLength(description, { min: 5 })) {
+  if (!description || !validator.isLength(description, { min: 5, max: 1000 })) {
     throw new InvalidInputError("Invalid description");
   }
   if (!location || !validator.isLength(location)) {
@@ -67,7 +67,7 @@ function isValidUser(
   if (!email || !validator.isEmail(email)) {
     throw new InvalidInputError("Invalid email");
   }
-  if (!birthday){
+  if (!birthday) {
     throw new InvalidInputError("Invalid birthday");
   }
 

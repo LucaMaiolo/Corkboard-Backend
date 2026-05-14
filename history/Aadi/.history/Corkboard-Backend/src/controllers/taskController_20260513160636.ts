@@ -84,7 +84,7 @@ async function getAllTasks(
   }
 }
 
-router.get("/:id", getTaskById);
+router.get("/id/:id", getTaskById);
 
 /**
  * GET /id/:id — fetch a single task by its MongoDB ObjectId.
@@ -140,11 +140,6 @@ async function getTaskById(
 
 router.put("/:id", updateTask);
 async function updateTask(request: Request, response: Response): Promise<void> {
-  const auth = authenticateUser(request);
-  if (auth === null) {
-    response.status(401).send("Unauthorized");
-    return;
-  }
   let id: ObjectId;
   try {
     id = new ObjectId(request.params.id as string);
@@ -163,7 +158,9 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     });
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof DatabaseError) {
+    if (error instanceof InvalidInputError) {
+      response.status(400).send("Invalid input:" + error.message);
+    } else if (error instanceof DatabaseError) {
       if (
         error.message.includes("Update failed, no task found with the given id")
       ) {
@@ -192,11 +189,6 @@ async function updateTask(request: Request, response: Response): Promise<void> {
  */
 router.delete("/:id", deleteTask);
 async function deleteTask(request: Request, response: Response): Promise<void> {
-  const auth = authenticateUser(request);
-  if (auth === null) {
-    response.status(401).send("Unauthorized");
-    return;
-  }
   let id: ObjectId;
   try {
     id = new ObjectId(request.params.id as string);
