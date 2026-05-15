@@ -22,10 +22,10 @@ router.post("/login", loginUser);
  * @param request - expects `body.username`, `body.password`, and optional `body.rememberMe`
  * @param response - 200 on success, 401 on bad credentials, 404 if user not found, 500 on session failure
  */
-async function loginUser(request: Request<{}, {}, { username: string; password: string; rememberMe: boolean }>, response: Response): Promise<void> {
+async function loginUser(request: Request, response: Response): Promise<void> {
   const username: string = request.body.username;
   const password: string = request.body.password;
-  const rememberMe = request.body.rememberMe;
+  const rememberMe: boolean = request.body.rememberMe === true;
 
   console.log("Login attempt:", username, "password length:", password?.length);
   const result = await checkCredentials(username, password);
