@@ -32,10 +32,6 @@ interface Controller {
   router: express.Router;
 }
 
-/**
- * dynamically imports and registers all controllers with the Express app.
- * @throws if any controller fails to load
- */
 async function registerControllers(): Promise<void> {
   for (const controllerName of controllers) {
     try {

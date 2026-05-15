@@ -107,6 +107,7 @@ async function updateUser(request: Request, response: Response): Promise<void> {
 
   const isAdmin = authenticatedUser.userSession.isAdmin;
 
+
 if (!isAdmin) {
   const currentPassword: string = request.body.currentPassword;
   const isCorrect = await model.checkCredentials(request.params.username, currentPassword);
@@ -150,7 +151,7 @@ async function deleteUser(request: Request, response: Response): Promise<void> {
     return;
   }
 
-  if (authenticatedUser.userSession.username !== request.params.username && !authenticatedUser.userSession.isAdmin) {
+  if (authenticatedUser.userSession.username !== request.params.username || !authenticatedUser.userSession.isAdmin) {
     response.sendStatus(403);
     return;
   }

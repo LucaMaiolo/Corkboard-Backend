@@ -15,22 +15,12 @@ class Session {
     this.isAdmin = isAdmin;
   }
 
-  /**
-   * @returns true if the session's expiry time is in the past
-   */
   isExpired(): boolean {
     return this.expiresAt < new Date();
   }
 }
 const sessions: Record<string, Session> = {};
 
-/**
- * creates a new session for the given user and stores it in the session map.
- * @param username - the username to associate with the session
- * @param numMinutes - how long until the session expires
- * @param isAdmin - whether the user has admin privileges
- * @returns the generated session ID
- */
 function createSession(username: string, numMinutes: number, isAdmin: boolean): string {
   // Generate a random UUID as the sessionId
   const sessionId: string = uuidv4();
@@ -47,19 +37,10 @@ function createSession(username: string, numMinutes: number, isAdmin: boolean): 
   return sessionId;
 }
 
-/**
- * retrieves a session by its ID.
- * @param sessionId - the session ID to look up
- * @returns the session if found, undefined otherwise
- */
 function getSession(sessionId: string): Session | undefined {
   return sessions[sessionId];
 }
 
-/**
- * removes a session from the session map.
- * @param sessionId - the session ID to delete
- */
 function deleteSession(sessionId: string): void {
   delete sessions[sessionId];
 }

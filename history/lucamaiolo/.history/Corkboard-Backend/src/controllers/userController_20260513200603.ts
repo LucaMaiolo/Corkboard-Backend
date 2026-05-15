@@ -105,16 +105,12 @@ async function updateUser(request: Request, response: Response): Promise<void> {
     return;
   }
 
-  const isAdmin = authenticatedUser.userSession.isAdmin;
-
-if (!isAdmin) {
   const currentPassword: string = request.body.currentPassword;
   const isCorrect = await model.checkCredentials(request.params.username, currentPassword);
   if (!isCorrect) {
     response.status(401).send("Current password is incorrect.");
     return;
   }
-}
 
   try {
     const updates: { password?: string; email?: string; birthday?: Date } = {};
@@ -150,7 +146,7 @@ async function deleteUser(request: Request, response: Response): Promise<void> {
     return;
   }
 
-  if (authenticatedUser.userSession.username !== request.params.username && !authenticatedUser.userSession.isAdmin) {
+  if (authenticatedUser.userSession.username !== request.params.username || !authenticatedUser.userSession.isAdmin) {
     response.sendStatus(403);
     return;
   }

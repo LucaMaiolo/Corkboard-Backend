@@ -8,7 +8,6 @@ import {
 } from "./Session.js";
 const router: Router = express.Router();
 const routeRoot: string = "/session";
-const SESSION_MINUTES = 10;
 interface AuthenticatedUser {
   sessionId: string;
   userSession: Session;
@@ -16,11 +15,6 @@ interface AuthenticatedUser {
 
 router.post("/login", loginUser);
 
-/**
- * logs in a user by verifying credentials and setting a session cookie.
- * @param request - expects `body.username` and `body.password`
- * @param response - 200 on success, 401 on bad credentials, 404 if user not found, 500 on session failure
- */
 async function loginUser(request: Request, response: Response): Promise<void> {
   const username: string = request.body.username;
   const password: string = request.body.password;
@@ -34,7 +28,7 @@ async function loginUser(request: Request, response: Response): Promise<void> {
       response.status(404).json({ message: "User not found." });
       return;
     }
-    const sessionId: string = createSession(username, SESSION_MINUTES, user.isAdmin);
+    const sessionId: string = createSession(username, 5, user.isAdmin);
     const session = getSession(sessionId);
     if (!session) {
       response.status(500).send("Session creation failed.");
@@ -50,11 +44,6 @@ async function loginUser(request: Request, response: Response): Promise<void> {
   }
 }
 
-/**
- * validates the session cookie on the request and returns the authenticated user.
- * @param request - the incoming request, expected to carry a `sessionId` cookie
- * @returns the authenticated user and session, or null if unauthenticated or expired
- */
 function authenticateUser(request: Request): AuthenticatedUser | null {
   // If this request doesn't have any cookies, that means it isn't authenticated. Return null.
   if (!request.cookies) {
@@ -79,12 +68,6 @@ function authenticateUser(request: Request): AuthenticatedUser | null {
   return { sessionId, userSession }; // Successfully validated
 }
 
-/**
- * replaces the current session with a new one, extending the expiry. sends 401 if not authenticated.
- * @param request - must carry a valid `sessionId` cookie
- * @param response - sets a new session cookie on success, 401 if unauthenticated
- * @returns the new session ID, or undefined if unauthenticated
- */
 function refreshSession(
   request: Request,
   response: Response,
@@ -98,7 +81,7 @@ function refreshSession(
   // Create and store a new Session object that will expire in 5 minutes.
   const newSessionId: string = createSession(
     authenticatedUser.userSession.username,
-    SESSION_MINUTES,
+    5,
     authenticatedUser.userSession.isAdmin,
   );
   // Delete the old entry in the session map
@@ -119,11 +102,6 @@ function refreshSession(
 }
 
 router.get("/current", getCurrentUser);
-/**
- * returns the currently authenticated user's username and admin status.
- * @param request - must carry a valid `sessionId` cookie
- * @param response - 200 with `{ username, isAdmin }`, or 401 if not logged in
- */
 function getCurrentUser(request: Request, response: Response): void {
   const authenticatedUser = authenticateUser(request);
   if (authenticatedUser === null) {
@@ -132,15 +110,10 @@ function getCurrentUser(request: Request, response: Response): void {
   }
   response
     .status(200)
-    .json({ username: authenticatedUser.userSession.username, isAdmin: authenticatedUser.userSession.isAdmin });
+    .json({ username: authenticatedUser.userSession.username });
 }
 
 router.get("/logout", logoutUser);
-/**
- * logs out the current user by deleting their session and clearing the cookie.
- * @param request - must carry a valid `sessionId` cookie
- * @param response - redirects to `/` on success, 401 if not authenticated
- */
 function logoutUser(request: Request, response: Response): void {
   const authenticatedUser = authenticateUser(request);
 
@@ -160,19 +133,15 @@ function logoutUser(request: Request, response: Response): void {
   response.redirect("/");
 }
 
-/**
- * middleware that extends the session expiry on every authenticated request (sliding window).
- * passes through unauthenticated requests without blocking them.
- * @param request - incoming request
- * @param response - outgoing response; a refreshed cookie is set if the user is authenticated
- * @param next - calls the next middleware or route handler
- */
 const refreshSessionMiddleware = (request: Request, response: Response, next: NextFunction): void => {
   const authenticatedUser = authenticateUser(request);
   if (authenticatedUser !== null) {
-    // extend expiry in place so route handlers on this same request still find the session
-    authenticatedUser.userSession.expiresAt = new Date(Date.now() + SESSION_MINUTES * 60000); // 60000 = ms in minute
-    response.cookie("sessionId", authenticatedUser.sessionId, { expires: authenticatedUser.userSession.expiresAt, httpOnly: true });
+    const newSessionId = createSession(authenticatedUser.userSession.username, 2, authenticatedUser.userSession.isAdmin);
+    deleteSession(authenticatedUser.sessionId);
+    const newSession = getSession(newSessionId);
+    if (newSession) {
+      response.cookie("sessionId", newSessionId, { expires: newSession.expiresAt, httpOnly: true });
+    }
   }
   next();
 };
