@@ -34,7 +34,7 @@ async function registerUser(request: any, response: any): Promise<void> {
       response.status(500).send("Database error: " + err.message);
     } else if (err instanceof Error) {
       response.status(500).send("Unexpected error: " + err.message);
-    } else {
+    } else { 
       response.status(500).send("Unexpected error occurred");
     }
   }
