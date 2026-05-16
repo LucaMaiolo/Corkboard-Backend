@@ -264,10 +264,11 @@ async function updateTask(
 }
 
 /**
- * Permanently removes the task identified by `id` from the collection
+ * Deletes the task with the given `name` from the MongoDb collection.
  *
- * @param id -The `ObjectId` of the task to delete
- * @throws {DatabaseError} If the collection is not initialised, no task matches the given task, or a database error occurs.
+ * @param name - the name of the task to be deleted.
+ * @throws {InvalidInputError} Throws if the name is invalid
+ * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with the given name.
  */
 async function deleteTask(id: ObjectId): Promise<void> {
   if (!tasksCollection) {
