@@ -197,15 +197,23 @@ async function getTaskById(id: ObjectId): Promise<WithId<Task>> {
       );
   }
 }
+
+/**
+ * Updates the task with the name `oldName` to have the properties of the given `task`.
+ *
+ * @param oldName - the name of the task to be updated.
+ * @param task - the updated task object.
+ * @returns - the updated task object.
+ * @throws {InvalidInputError} Throws if any input is invalid
+ * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with given name.
+ */
 /**
  * Validates and updates a task by its `id`.
  * The `listerId` cannot be changed
- *
+ * 
  * @param id -The `ObjectId` of the task to update
- * @param task -Updated task values
- * @returns The updated task
- * @throws {InvalidInputError} If any of the new fields fail validation
- * @throws {DatabaseError} If the collection is not initialised, no task matches the given id or a database error occurs
+ * @param task -Updated task values 
+ * @returns 
  */
 async function updateTask(
   id: ObjectId,
@@ -264,10 +272,11 @@ async function updateTask(
 }
 
 /**
- * Permanently removes the task identified by `id` from the collection
+ * Deletes the task with the given `name` from the MongoDb collection.
  *
- * @param id -The `ObjectId` of the task to delete
- * @throws {DatabaseError} If the collection is not initialised, no task matches the given task, or a database error occurs.
+ * @param name - the name of the task to be deleted.
+ * @throws {InvalidInputError} Throws if the name is invalid
+ * @throws {DatabaseError} Throws if there is an error during database operation or if no task is found with the given name.
  */
 async function deleteTask(id: ObjectId): Promise<void> {
   if (!tasksCollection) {

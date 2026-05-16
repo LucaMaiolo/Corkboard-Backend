@@ -265,9 +265,9 @@ async function updateTask(
 
 /**
  * Permanently removes the task identified by `id` from the collection
- *
+ * 
  * @param id -The `ObjectId` of the task to delete
- * @throws {DatabaseError} If the collection is not initialised, no task matches the given task, or a database error occurs.
+ * @throws {DatabaseError}
  */
 async function deleteTask(id: ObjectId): Promise<void> {
   if (!tasksCollection) {
