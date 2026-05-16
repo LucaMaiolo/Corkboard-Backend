@@ -34,26 +34,11 @@ const addOffer = async (request: Request, response: Response): Promise<void> => 
       response.status(404).send("Gig not found");
       return;
     }
-    if (task.status !== "Available") {
-      response.status(400).send("Gig is not open for offers");
-      return;
-    }
-    if (auth.userSession.username === task.listerId) {
-      response.status(403).send("Cannot make an offer on your own gig");
-      return;
-    }
-    if ((request.body.price as number) > task.pay) {
+    if (request.body.price > task.pay) {
       response.status(400).send(`Offer price cannot exceed the gig budget of ${task.pay}`);
       return;
     }
-    const input: offerModel.OfferCreateInput = {
-      gigId: request.body.gigId as string,
-      submittedById: auth.userSession.username,
-      listerId: task.listerId,
-      price: request.body.price as number,
-    };
-    if (request.body.message) input.message = request.body.message as string;
-    const result = await offerModel.addOffer(input);
+    const result = await offerModel.addOffer(request.body);
     response.status(201).json(result);
   } catch (error) {
     if (error instanceof InvalidInputError) {
@@ -71,8 +56,8 @@ router.post("/", addOffer);
 
 /**
  * retrieves offers for a given gig. admins and the task owner see all offers; submitters see only their own.
- * @param request - query.gigId is the ObjectId of the gig; requires a valid session cookie
- * @param response - 200 with array of offers, 401/403/404 on auth or not-found, 500 on error
+ * @param request - request.query.gigId is the ObjectId of the gig; requires a valid session cookie
+ * @param response - 200 with array of offers, 401 if not authenticated, 403 if unauthorized, 404 if gig not found, 500 on error
  */
 const getOffersByGig = async (request: Request<Record<string, never>, unknown, unknown, { gigId: string }>, response: Response): Promise<void> => {
   const auth = authenticateUser(request);
@@ -146,43 +131,24 @@ const getMyOffers = async (request: Request, response: Response): Promise<void> 
 router.get("/myOffers", getMyOffers);
 
 /**
- * accepts an offer. only the task lister (or admin) may call this.
- * declines all other pending offers on the same gig and marks the task completed.
- * @param request - params.id is the uuid of the offer to accept
- * @param response - 200 on success, 401/403/404/409 on auth or state errors, 500 on db error
+ * accepts an offer and declines all other pending offers on the same gig.
+ * @param request - request.params.id is the uuid of the offer to accept
+ * @param response - 200 with the gigId on success, 500 on db/unexpected error
  */
 const acceptOffer = async (request: Request<{ id: string }>, response: Response): Promise<void> => {
-  const auth = authenticateUser(request);
-  if (auth === null) {
-    response.status(401).send("Unauthorized");
-    return;
-  }
   try {
     const { id } = request.params;
-    const offer = await offerModel.getOfferById(id);
-    if (!auth.userSession.isAdmin && auth.userSession.username !== offer.listerId) {
-      response.status(403).send("Forbidden");
-      return;
-    }
-    const task = await taskModel.getTaskById(new ObjectId(offer.gigId));
-    if (task.status === "Completed") {
-      response.status(409).send("Gig has already been filled");
-      return;
-    }
-    await offerModel.acceptOffer(id);
-    try {
-      await taskModel.updateTask(new ObjectId(offer.gigId), {
-        name: task.name,
-        description: task.description,
-        location: task.location,
-        pay: task.pay,
-        timeInMins: task.timeInMins,
-        status: "Completed" as Status,
-      });
-    } catch {
-      // task update failure doesn't undo the accepted offer; log only
-    }
-    response.status(200).json({ gigId: offer.gigId });
+    const result = await offerModel.acceptOffer(id);
+    const task = await taskModel.getTaskById(new ObjectId(result.gigId));
+    await taskModel.updateTask(new ObjectId(result.gigId), {
+      name: task.name,
+      description: task.description,
+      location: task.location,
+      pay: task.pay,
+      timeInMins: task.timeInMins,
+      status: "Completed" as Status,
+    });
+    response.status(200).json(result);
   } catch (error) {
     if (error instanceof DatabaseError) {
       response.status(500).send(`Database error: ${error.message}`);
@@ -196,26 +162,13 @@ const acceptOffer = async (request: Request<{ id: string }>, response: Response)
 router.put("/:id/accept", acceptOffer);
 
 /**
- * declines a single pending offer. the task lister, the offer submitter, or an admin may call this.
- * @param request - params.id is the uuid of the offer to decline
- * @param response - 200 on success, 401/403 on auth, 500 on db error
+ * declines a single pending offer.
+ * @param request - request.params.id is the uuid of the offer to decline
+ * @param response - 200 on success, 500 on db/unexpected error
  */
 const declineOffer = async (request: Request<{ id: string }>, response: Response): Promise<void> => {
-  const auth = authenticateUser(request);
-  if (auth === null) {
-    response.status(401).send("Unauthorized");
-    return;
-  }
   try {
     const { id } = request.params;
-    const offer = await offerModel.getOfferById(id);
-    const canDecline = auth.userSession.isAdmin
-      || auth.userSession.username === offer.listerId
-      || auth.userSession.username === offer.submittedById;
-    if (!canDecline) {
-      response.status(403).send("Forbidden");
-      return;
-    }
     await offerModel.declineOffer(id);
     response.status(200).send("Offer declined");
   } catch (error) {
