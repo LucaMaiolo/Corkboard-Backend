@@ -1,11 +1,4 @@
-import {
-  MongoError,
-  Db,
-  MongoClient,
-  Collection,
-  ObjectId,
-  WithId,
-} from "mongodb";
+import { type Db, type Collection, type ObjectId, type WithId, MongoError, MongoClient } from "mongodb";
 import { DatabaseError } from "./DatabaseError.js";
 import { InvalidInputError } from "./InvalidInputError.js";
 import { isValidTask } from "./validateUtils.js";
@@ -75,16 +68,16 @@ async function initialize(
     }
     tasksCollection = db.collection<Task>(collection);
 
-    logger.info("Connected to MongoDB:" + dbName);
+    logger.info(`Connected to MongoDB:${dbName}`);
   } catch (err: unknown) {
     if (err instanceof MongoError) {
-      logger.error("MongoDB error: " + err.message);
+      logger.error(`MongoDB error: ${err.message}`);
       throw new DatabaseError("Database operation failed");
     } else if (err instanceof DatabaseError) {
-      logger.error("Database error: " + err.message);
+      logger.error(`Database error: ${err.message}`);
       throw err;
     } else if (err instanceof Error) {
-      logger.error("Unexpected error: " + err.message);
+      logger.error(`Unexpected error: ${err.message}`);
       throw new DatabaseError("An unexpected error occurred");
     } else {
       logger.error("Unknown error");
@@ -120,16 +113,16 @@ async function addTask(task: Task): Promise<WithId<Task>> {
     return { ...task, _id: result.insertedId };
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      logger.warn("Invalid input: " + err.message);
+      logger.warn(`Invalid input: ${err.message}`);
       throw err;
     } else if (err instanceof MongoError) {
-      logger.error("MongoDB error: " + err.message);
+      logger.error(`MongoDB error: ${err.message}`);
       throw new DatabaseError("Database operation failed");
     } else if (err instanceof DatabaseError) {
-      logger.error("Database error: " + err.message);
+      logger.error(`Database error: ${err.message}`);
       throw err;
     } else if (err instanceof Error) {
-      logger.error("Unexpected error: " + err.message);
+      logger.error(`Unexpected error: ${err.message}`);
       throw new DatabaseError("An unexpected error occured");
     } else {
       logger.error("Unknown error");
@@ -156,13 +149,13 @@ async function getAllTasks(): Promise<WithId<Task>[]> {
     return allTask;
   } catch (err: unknown) {
     if (err instanceof MongoError) {
-      logger.error("MongoDB error: " + err.message);
+      logger.error(`MongoDB error: ${err.message}`);
       throw new DatabaseError("Database operation failed");
     } else if (err instanceof DatabaseError) {
-      logger.error("Database error: " + err.message);
+      logger.error(`Database error: ${err.message}`);
       throw err;
     } else if (err instanceof Error) {
-      logger.error("Unexpected error: " + err.message);
+      logger.error(`Unexpected error: ${err.message}`);
       throw new DatabaseError("An unexpected error occurred");
     } else {
       logger.error("Unknown error");
@@ -244,16 +237,16 @@ async function updateTask(
     return result;
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      logger.warn("Invalid input: " + err.message);
+      logger.warn(`Invalid input: ${err.message}`);
       throw err;
     } else if (err instanceof MongoError) {
-      logger.error("MongoDB error: " + err.message);
+      logger.error(`MongoDB error: ${err.message}`);
       throw new DatabaseError("Database operation failed");
     } else if (err instanceof DatabaseError) {
-      logger.error("Database error: " + err.message);
+      logger.error(`Database error: ${err.message}`);
       throw err;
     } else if (err instanceof Error) {
-      logger.error("Unexpected error: " + err.message);
+      logger.error(`Unexpected error: ${err.message}`);
       throw new DatabaseError("An unexpected error occurred");
     } else {
       logger.error("Unknown error");
@@ -284,16 +277,16 @@ async function deleteTask(id: ObjectId): Promise<void> {
     }
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      logger.warn("Invalid input: " + err.message);
+      logger.warn(`Invalid input: ${err.message}`);
       throw err;
     } else if (err instanceof MongoError) {
-      logger.error("MongoDB error: " + err.message);
+      logger.error(`MongoDB error: ${err.message}`);
       throw new DatabaseError("Database operation failed");
     } else if (err instanceof DatabaseError) {
-      logger.error("Database error: " + err.message);
+      logger.error(`Database error: ${err.message}`);
       throw err;
     } else if (err instanceof Error) {
-      logger.error("Unexpected error: " + err.message);
+      logger.error(`Unexpected error: ${err.message}`);
       throw new DatabaseError("An unexpected error occurred");
     } else {
       logger.error("Unknown error");

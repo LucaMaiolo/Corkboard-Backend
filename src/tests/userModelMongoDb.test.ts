@@ -23,7 +23,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await close();
-})
+});
 
 beforeEach(async () => {
     await initialize(TEST_DB, true, TEST_COLLECTION, TEST_URL);

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import puppeteer, { type Browser, type Page } from "puppeteer";
-import {test, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { test, expect, beforeAll, afterAll } from "vitest";
 
 let browser: Browser;
 let page: Page;
@@ -16,7 +16,7 @@ afterAll(async () => {
     await browser.close();
 });
 
-async function FillRegisterForm(username:string, password: string, email: string, birthday: string) {
+async function FillRegisterForm(username: string, password: string, email: string, birthday: string): Promise<void> {
     
     await page.goto(`${BASE_URL}/register`);
     await page.waitForSelector("input[placeholder='Username']");

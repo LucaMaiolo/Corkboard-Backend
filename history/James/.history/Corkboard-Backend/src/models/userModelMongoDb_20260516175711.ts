@@ -1,5 +1,4 @@
-import type { Db, Collection } from "mongodb";
-import { MongoError, MongoClient } from "mongodb";
+import { type Db, type Collection, MongoError, MongoClient } from "mongodb";
 import { DatabaseError } from "./DatabaseError.js";
 import { InvalidInputError } from "./InvalidInputError.js";
 import { isValidUser as isValid } from "./validateUtils.js";
@@ -9,7 +8,7 @@ import validator from "validator";
 
 let client: MongoClient;
 let usersCollection: Collection<User> | undefined;
-
+ 
 const SALT_ROUNDS = 10;
 
 interface User {
@@ -55,16 +54,16 @@ async function initialize(
         }
         usersCollection = db.collection<User>(collection);
 
-        logger.info(`Connected to MongoDB:${dbName}`);
+        logger.info(`Connected to MongoDB:${  dbName}`);
     } catch (err: unknown) {
         if (err instanceof MongoError) {
-            logger.error(`MongoDB error: ${err.message}`);
+            logger.error(`MongoDB error: ${  err.message}`);
             throw new DatabaseError("Database operation failed");
         } else if (err instanceof DatabaseError) {
-            logger.error(`Database error: ${err.message}`);
+            logger.error(`Database error: ${  err.message}`);
             throw err;
         } else {
-            logger.error(`Unexpected error: ${String(err)}`);
+            logger.error(`Unexpected error: ${  String(err)}`);
             throw new Error("Unexpected error during database initialization", { cause: err });
         }
     }
@@ -86,14 +85,14 @@ async function initialize(
     email: string,
     birthday: Date
 ): Promise<User> {
-
+    
     username = username.toLowerCase();
     if (!usersCollection) {
         throw new DatabaseError("Database not initialized");
     }
     try {
         isValid(username, password, email, birthday);
-
+        
         const existing = await usersCollection.findOne({username});
         if (existing){
             throw new InvalidInputError("Username already exists");
@@ -101,7 +100,7 @@ async function initialize(
         const existingEmail = await usersCollection.findOne({email});
         if (existingEmail){
             throw new InvalidInputError("Email already in use");
-        }
+        }   
 
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
         const newUser: User = {
@@ -113,26 +112,26 @@ async function initialize(
         };
 
         await usersCollection.insertOne(newUser);
-        logger.info(`User added: ${username}`);
+        logger.info(`User added: ${  username}`);
         return newUser;
     }catch (err: unknown){
         if (err instanceof InvalidInputError){
-            logger.warn(`Invalid input: ${err.message}`);
-            throw err;
+            logger.warn(`Invalid input: ${  err.message}`);
+            throw err; 
         } else if (err instanceof MongoError){
-            logger.error(`MongoDB error: ${err.message}`);
+            logger.error(`MongoDB error: ${  err.message}`);
             throw new DatabaseError("Database operation failed");
         } else if(err instanceof DatabaseError) {
-            logger.error(`Database error: ${err.message}`);
+            logger.error(`Database error: ${  err.message}`);
             throw err;
         } else if (err instanceof Error) {
-            logger.error(`Unexpected error: ${err.message}`);
+            logger.error(`Unexpected error: ${  err.message}`);
             throw new DatabaseError("An unexpected error occurred");
         } else {
             logger.error("Unknown error");
             throw new DatabaseError("An unknown error occurred in addUser. Should not happen");
         }
-    }
+    }  
 }
 
 
@@ -153,25 +152,25 @@ async function getSingleUser(username: string): Promise<User| null> {
         return user;
     }catch (err: unknown){
         if (err instanceof MongoError){
-            logger.error(`MongoDB error: ${err.message}`);
+            logger.error(`MongoDB error: ${  err.message}`);
             throw new DatabaseError("Database operation failed");
         } else if(err instanceof DatabaseError) {
-            logger.error(`Database error: ${err.message}`);
+            logger.error(`Database error: ${  err.message}`);
             throw err;
         } else if (err instanceof Error) {
-            logger.error(`Unexpected error: ${err.message}`);
+            logger.error(`Unexpected error: ${  err.message}`);
             throw new DatabaseError("An unexpected error occurred");
         } else {
             logger.error("Unknown error");
             throw new DatabaseError("An unknown error occurred in getSingleUser. Should not happen");
         }
-    }
+    }  
 }
 
 /**
  * Retrieves all users from the database.
  * @returns an array of all user objects in the database
- * @throws {DatabaseError} if a database operation fails
+ * @throws {DatabaseError} if a database operation fails 
  */
 async function getAllUsers(): Promise<User[]>{
     if (!usersCollection) {
@@ -179,18 +178,18 @@ async function getAllUsers(): Promise<User[]>{
     }
 
     try{
-        const cursor = await usersCollection.find({});
+        const cursor = usersCollection.find({});
         const allUsers: User[] = await cursor.toArray();
         return allUsers;
     } catch (err: unknown) {
         if (err instanceof MongoError) {
-          logger.error(`MongoDB error: ${err.message}`);
+          logger.error(`MongoDB error: ${  err.message}`);
           throw new DatabaseError("Database operation failed");
         } else if (err instanceof DatabaseError) {
-          logger.error(`Database error: ${err.message}`);
+          logger.error(`Database error: ${  err.message}`);
           throw err;
         } else if (err instanceof Error) {
-          logger.error(`Unexpected error: ${err.message}`);
+          logger.error(`Unexpected error: ${  err.message}`);
           throw new DatabaseError("An unexpected error occurred");
         } else {
           logger.error("Unknown error");
@@ -226,7 +225,7 @@ async function updateUser(
             throw new InvalidInputError("Invalid username");
         }
         const setFields: Partial<User> = {};
-
+        
         if (updates.password) {
             if (!validator.isLength(updates.password, {min: 8})){
                 throw new InvalidInputError("Invalid password");
@@ -268,16 +267,16 @@ async function updateUser(
         return result;
     } catch (err: unknown){
         if (err instanceof InvalidInputError){
-            logger.warn(`Invalid input: ${err.message}`);
-            throw err;
+            logger.warn(`Invalid input: ${  err.message}`);
+            throw err; 
         } else if (err instanceof MongoError){
-            logger.error(`MongoDB error: ${err.message}`);
+            logger.error(`MongoDB error: ${  err.message}`);
             throw new DatabaseError("Database operation failed");
         } else if(err instanceof DatabaseError) {
-            logger.error(`Database error: ${err.message}`);
+            logger.error(`Database error: ${  err.message}`);
             throw err;
         } else if (err instanceof Error) {
-            logger.error(`Unexpected error: ${err.message}`);
+            logger.error(`Unexpected error: ${  err.message}`);
             throw new DatabaseError("An unexpected error occurred");
         } else {
             logger.error("Unknown error");
@@ -289,7 +288,7 @@ async function updateUser(
  * Deletes a user from the database by username.
  * @param username username of user to delete
  * @throws {InvalidInputError} if the username is invalid
- * @throws {DatabaseError} if the user is not found or a database operation fails
+ * @throws {DatabaseError} if the user is not found or a database operation fails 
  */
 async function deleteUser(username: string): Promise<void>{
     username = username.toLowerCase();
@@ -300,7 +299,7 @@ async function deleteUser(username: string): Promise<void>{
     try{
      if (!username || !validator.isAlphanumeric(username)){
         throw new InvalidInputError("Invalid username");
-
+        
     }
     const result = await usersCollection.deleteOne({username});
     if (result.deletedCount === 0){
@@ -308,16 +307,16 @@ async function deleteUser(username: string): Promise<void>{
     }
     }catch (err: unknown) {
         if (err instanceof InvalidInputError) {
-          logger.warn(`Invalid input: ${err.message}`);
+          logger.warn(`Invalid input: ${  err.message}`);
           throw err;
         } else if (err instanceof MongoError) {
-          logger.error(`MongoDB error: ${err.message}`);
+          logger.error(`MongoDB error: ${  err.message}`);
           throw new DatabaseError("Database operation failed");
         } else if (err instanceof DatabaseError) {
-          logger.error(`Database error: ${err.message}`);
+          logger.error(`Database error: ${  err.message}`);
           throw err;
         } else if (err instanceof Error) {
-          logger.error(`Unexpected error: ${err.message}`);
+          logger.error(`Unexpected error: ${  err.message}`);
           throw new DatabaseError("An unexpected error occurred");
         } else {
           logger.error("Unknown error");
@@ -345,17 +344,17 @@ async function checkCredentials(username: string, password: string): Promise<boo
         const user = await usersCollection.findOne({username});
         if (!user){
             return false;
-        }
+        } 
         return await bcrypt.compare(password, user.password);
     }catch(err: unknown) {
         if (err instanceof MongoError) {
-          logger.error(`MongoDB error: ${err.message}`);
+          logger.error(`MongoDB error: ${  err.message}`);
           throw new DatabaseError("Database operation failed");
         } else if (err instanceof DatabaseError) {
-          logger.error(`Database error: ${err.message}`);
+          logger.error(`Database error: ${  err.message}`);
           throw err;
         } else if (err instanceof Error) {
-          logger.error(`Unexpected error: ${err.message}`);
+          logger.error(`Unexpected error: ${  err.message}`);
           throw new DatabaseError("An unexpected error occurred");
         } else {
           logger.error("Unknown error");
@@ -367,9 +366,9 @@ async function checkCredentials(username: string, password: string): Promise<boo
 async function close(): Promise<void> {
     if (client) await client.close();
 }
-
+ 
 export { initialize, addUser, getSingleUser, getAllUsers, updateUser, deleteUser, checkCredentials, close };
 export type { User };
-
+ 
 
 

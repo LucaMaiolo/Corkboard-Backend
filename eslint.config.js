@@ -66,6 +66,10 @@ const tsConfig = {
   ],
   languageOptions: {
     ...baseConfig.languageOptions,
+    parserOptions: {
+      project: true,
+      tsconfigRootDir: import.meta.dirname,
+    },
   },
   rules: {
     ...baseConfig.rules,
