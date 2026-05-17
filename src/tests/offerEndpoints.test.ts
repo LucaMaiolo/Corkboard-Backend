@@ -1,0 +1,190 @@
+import "dotenv/config";
+import { test, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import request from "supertest";
+import app from "../app.js";
+import * as userModel from "../models/userModelMongoDb.js";
+import * as taskModel from "../models/taskModelMongoDb.js";
+import * as offerModel from "../models/offerModelMongoDb.js";
+
+const TEST_DB = "CorkboardTestDb";
+const TEST_URL = `${process.env.URL_PRE}${process.env.MONGODB_PWD}${process.env.URL_POST}`;
+
+const lister = { username: "testlister", password: "password123", email: "lister@offertest.com", birthday: "2000-01-01" };
+const offerer = { username: "testofferer", password: "password123", email: "offerer@offertest.com", birthday: "2000-01-01" };
+const stranger = { username: "teststranger", password: "password123", email: "stranger@offertest.com", birthday: "2000-01-01" };
+
+/**
+ * logs in via the session endpoint and returns the full set-cookie header value.
+ * @param username - account username
+ * @param password - account password
+ */
+const loginAndGetCookie = async (username: string, password: string): Promise<string> => {
+    const response = await request(app).post("/session/login").send({ username, password });
+    const cookie = response.headers["set-cookie"] as string | string[];
+    return Array.isArray(cookie) ? cookie[0]! : cookie;
+};
+
+/**
+ * creates a task via the api and returns its mongodb _id string.
+ * @param cookie - lister's session cookie
+ * @param pay - maximum payout for the gig
+ */
+const createTask = async (cookie: string, pay = 100): Promise<string> => {
+    const response = await request(app)
+        .post("/tasks")
+        .set("Cookie", cookie)
+        .send({ name: "Test Gig", description: "test description", location: "Montreal", pay, timeInMins: 60, status: "Available" });
+    return (response.body as { _id: string })._id;
+};
+
+/**
+ * creates an offer via the api and returns the supertest response.
+ * @param gigId - mongodb _id of the task to bid on
+ * @param submittedById - username of the offerer
+ * @param listerId - username of the task owner
+ * @param price - offered price
+ */
+const createOffer = async (gigId: string, submittedById: string, listerId: string, price: number) =>
+    request(app).post("/offers").send({ gigId, submittedById, listerId, price });
+
+beforeAll(async () => {
+    await userModel.initialize(TEST_DB, true, "OffersEndpointUsers", TEST_URL);
+    await taskModel.initialize(TEST_DB, true, "OffersEndpointTasks", TEST_URL);
+    await offerModel.initialize(TEST_DB, true, "OffersEndpointOffers", TEST_URL);
+});
+
+afterAll(async () => {
+    await userModel.close();
+    await taskModel.close();
+    await offerModel.close();
+});
+
+beforeEach(async () => {
+    await userModel.initialize(TEST_DB, true, "OffersEndpointUsers", TEST_URL);
+    await taskModel.initialize(TEST_DB, true, "OffersEndpointTasks", TEST_URL);
+    await offerModel.initialize(TEST_DB, true, "OffersEndpointOffers", TEST_URL);
+});
+
+// POST /offers
+
+test("create offer success: valid offer on existing gig returns 201 with pending status", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(offerer);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie);
+
+    const response = await createOffer(gigId, offerer.username, lister.username, 50);
+    expect(response.status).toBe(201);
+    expect(response.body.status).toBe("pending");
+    expect(response.body.id).toBeDefined();
+});
+
+test("create offer fail: price exceeds gig budget returns 400", async () => {
+    await request(app).post("/users").send(lister);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie, 100);
+
+    const response = await createOffer(gigId, offerer.username, lister.username, 999);
+    expect(response.status).toBe(400);
+    expect(response.text).toContain("budget");
+});
+
+test("create offer fail: malformed gigId returns 400", async () => {
+    const response = await createOffer("not-a-valid-id", offerer.username, lister.username, 50);
+    expect(response.status).toBe(400);
+});
+
+test("create offer fail: price of zero returns 400", async () => {
+    await request(app).post("/users").send(lister);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie);
+
+    const response = await createOffer(gigId, offerer.username, lister.username, 0);
+    expect(response.status).toBe(400);
+});
+
+// GET /offers?gigId=
+
+test("get offers success: lister retrieves all offers for their gig", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(offerer);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie);
+    await createOffer(gigId, offerer.username, lister.username, 50);
+
+    const response = await request(app).get(`/offers?gigId=${gigId}`).set("Cookie", listerCookie);
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+});
+
+test("get offers fail: unauthenticated request returns 401", async () => {
+    const response = await request(app).get("/offers?gigId=000000000000000000000001");
+    expect(response.status).toBe(401);
+});
+
+test("get offers fail: user with no offer on the gig returns 403", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(stranger);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const strangerCookie = await loginAndGetCookie(stranger.username, stranger.password);
+    const gigId = await createTask(listerCookie);
+
+    const response = await request(app).get(`/offers?gigId=${gigId}`).set("Cookie", strangerCookie);
+    expect(response.status).toBe(403);
+});
+
+// GET /offers/myOffers
+
+test("get my offers success: offerer retrieves their own submitted offers", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(offerer);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const offererCookie = await loginAndGetCookie(offerer.username, offerer.password);
+    const gigId = await createTask(listerCookie);
+    await createOffer(gigId, offerer.username, lister.username, 50);
+
+    const response = await request(app).get("/offers/myOffers").set("Cookie", offererCookie);
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+});
+
+test("get my offers fail: unauthenticated request returns 401", async () => {
+    const response = await request(app).get("/offers/myOffers");
+    expect(response.status).toBe(401);
+});
+
+// PUT /offers/:id/accept
+
+test("accept offer success: pending offer becomes accepted and gig becomes completed", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(offerer);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie);
+    const createResponse = await createOffer(gigId, offerer.username, lister.username, 50);
+    const offerId = (createResponse.body as { id: string }).id;
+
+    const response = await request(app).put(`/offers/${offerId}/accept`);
+    expect(response.status).toBe(200);
+    expect(response.body.gigId).toBe(gigId);
+});
+
+test("accept offer fail: non-existent offer id returns 500", async () => {
+    const response = await request(app).put("/offers/00000000-0000-0000-0000-000000000000/accept");
+    expect(response.status).toBe(500);
+});
+
+// PUT /offers/:id/decline
+
+test("decline offer success: pending offer status becomes declined", async () => {
+    await request(app).post("/users").send(lister);
+    await request(app).post("/users").send(offerer);
+    const listerCookie = await loginAndGetCookie(lister.username, lister.password);
+    const gigId = await createTask(listerCookie);
+    const createResponse = await createOffer(gigId, offerer.username, lister.username, 50);
+    const offerId = (createResponse.body as { id: string }).id;
+
+    const response = await request(app).put(`/offers/${offerId}/decline`);
+    expect(response.status).toBe(200);
+});
