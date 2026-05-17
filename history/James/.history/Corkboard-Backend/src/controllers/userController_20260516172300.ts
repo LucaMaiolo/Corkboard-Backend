@@ -1,4 +1,5 @@
-import express, { type Request, type Response } from "express";
+import express from "express";
+import type { Request, Response } from "express";
 import * as model from "../models/userModelMongoDb.js";
 import * as taskModel from "../models/taskModelMongoDb.js";
 import * as offerModel from "../models/offerModelMongoDb.js";
@@ -21,18 +22,18 @@ router.post("/", registerUser);
  * - birthday: string, required, ISO date format (YYYY-MM-DD)
  * @param response - 201 with created user on success, 400 on invalid input, 500 on database or unexpected error
  */
-async function registerUser(request: Request, response: Response): Promise<void> {
+async function registerUser(request: any, response: any): Promise<void> {
   try {
     const { username, password, email, birthday } = request.body;
     const result = await model.addUser(username, password, email, new Date(birthday));
     response.status(201).json(result);
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input: ${err.message}`);
+      response.status(400).send("Invalid input: " + err.message);
     } else if (err instanceof DatabaseError) {
-      response.status(500).send(`Database error: ${err.message}`);
+      response.status(500).send("Database error: " + err.message);
     } else if (err instanceof Error) {
-      response.status(500).send(`Unexpected error: ${err.message}`);
+      response.status(500).send("Unexpected error: " + err.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -66,9 +67,9 @@ async function getAllUsers(request: Request, response: Response): Promise<void> 
     response.status(200).json(result);
   } catch (err: unknown) {
     if (err instanceof DatabaseError) {
-      response.status(500).send(`Database error: ${err.message}`);
+      response.status(500).send("Database error: " + err.message);
     } else if (err instanceof Error) {
-      response.status(500).send(`Unexpected error: ${err.message}`);
+      response.status(500).send("Unexpected error: " + err.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -102,15 +103,15 @@ async function getSingleUser(request: Request, response: Response): Promise<void
     response.status(200).json(result);
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input: ${err.message}`);
+      response.status(400).send("Invalid input: " + err.message);
     } else if (err instanceof DatabaseError) {
       if (err.message.includes("Find result was null")) {
-        response.status(404).send(`User not found: ${err.message}`);
+        response.status(404).send("User not found: " + err.message);
       } else {
-        response.status(500).send(`Database error: ${err.message}`);
+        response.status(500).send("Database error: " + err.message);
       }
     } else if (err instanceof Error) {
-      response.status(500).send(`Unexpected error: ${err.message}`);
+      response.status(500).send("Unexpected error: " + err.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -161,15 +162,15 @@ async function updateUser(request: Request, response: Response): Promise<void> {
     response.status(200).json(result);
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input: ${err.message}`);
+      response.status(400).send("Invalid input: " + err.message);
     } else if (err instanceof DatabaseError) {
       if (err.message.includes("no user found with the given username")) {
-        response.status(404).send(`User not found: ${err.message}`);
+        response.status(404).send("User not found: " + err.message);
       } else {
-        response.status(500).send(`Database error: ${err.message}`);
+        response.status(500).send("Database error: " + err.message);
       }
     } else if (err instanceof Error) {
-      response.status(500).send(`Unexpected error: ${err.message}`);
+      response.status(500).send("Unexpected error: " + err.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -208,15 +209,15 @@ async function deleteUser(request: Request, response: Response): Promise<void> {
     response.status(200).send(`User deleted: username=${username}`);
   } catch (err: unknown) {
     if (err instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input: ${err.message}`);
+      response.status(400).send("Invalid input: " + err.message);
     } else if (err instanceof DatabaseError) {
       if (err.message.includes("no user found with the given username")) {
-        response.status(404).send(`User not found: ${err.message}`);
+        response.status(404).send("User not found: " + err.message);
       } else {
-        response.status(500).send(`Database error: ${err.message}`);
+        response.status(500).send("Database error: " + err.message);
       }
     } else if (err instanceof Error) {
-      response.status(500).send(`Unexpected error: ${err.message}`);
+      response.status(500).send("Unexpected error: " + err.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }

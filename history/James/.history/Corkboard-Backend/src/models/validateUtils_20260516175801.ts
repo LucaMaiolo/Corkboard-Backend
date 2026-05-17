@@ -57,7 +57,7 @@ function isValidUser(
   if (
     !username ||
     !validator.isAlphanumeric(username) ||
-    !validator.isLength(username, { min: 3, max: 32 })
+    !validator.isLength(username, { min: 3, max: 16 })
   ) {
     throw new InvalidInputError("Invalid username");
   }

@@ -1,10 +1,10 @@
-import express, { type NextFunction, type  Request, type  Response, type  Router } from "express";
+import express, { NextFunction, Request, Response, Router } from "express";
 import { checkCredentials, getSingleUser } from "../models/userModelMongoDb.js";
 import {
-  type Session,
   createSession,
   getSession,
-  deleteSession
+  deleteSession,
+  Session,
 } from "./Session.js";
 const router: Router = express.Router();
 const routeRoot: string = "/session";
@@ -22,7 +22,7 @@ router.post("/login", loginUser);
  * @param request - expects `body.username`, `body.password`, and optional `body.rememberMe`
  * @param response - 200 on success, 401 on bad credentials, 404 if user not found, 500 on session failure
  */
-async function loginUser(request: Request<Record<string, never>, unknown, { username: string; password: string; rememberMe: boolean }>, response: Response): Promise<void> {
+async function loginUser(request: Request<{}, {}, { username: string; password: string; rememberMe: boolean }>, response: Response): Promise<void> {
   const username: string = request.body.username;
   const password: string = request.body.password;
   const rememberMe = request.body.rememberMe;
@@ -154,7 +154,7 @@ function logoutUser(request: Request, response: Response): void {
 
   // Delete the session from the session store
   deleteSession(authenticatedUser.sessionId);
-  console.log(`Logged out user ${  authenticatedUser.userSession.username}`);
+  console.log("Logged out user " + authenticatedUser.userSession.username);
 
   // Clear cookie
   response.clearCookie("sessionId");

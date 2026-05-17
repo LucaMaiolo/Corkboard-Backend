@@ -36,9 +36,12 @@ const handleError = (error: Error, context: string): never => {
   } else if (error instanceof DatabaseError) {
     logger.error(`database error in ${context}: ${error.message}`);
     throw error;
-  } else {
+  } else if (error instanceof Error) {
     logger.error(`unexpected error in ${context}: ${error.message}`);
     throw new DatabaseError("An unexpected error occurred");
+  } else {
+    logger.error(`unknown error in ${context}`);
+    throw new DatabaseError(`An unknown error occurred in ${context}`);
   }
 };
 
@@ -73,7 +76,7 @@ export const initialize = async (dbName: string, resetFlag: boolean, collection:
 
     logger.info(`Connected to MongoDB: ${dbName}/${collection}`);
   } catch (error) {
-    handleError(error as Error, "initialize");
+    if (error instanceof Error) handleError(error, "initialize");
   }
 };
 
@@ -108,7 +111,7 @@ export const addOffer = async (input: OfferCreateInput): Promise<Offer> => {
     );
     return offer;
   } catch (error) {
-    handleError(error as Error, "addOffer");
+    if (error instanceof Error) handleError(error, "addOffer");
   }
 };
 
@@ -126,7 +129,7 @@ export const getOfferById = async (id: string): Promise<Offer> => {
     if (!offer) throw new DatabaseError("Offer not found");
     return offer;
   } catch (error) {
-    handleError(error as Error, "getOfferById");
+    if (error instanceof Error) handleError(error, "getOfferById");
   }
 };
 
@@ -142,7 +145,7 @@ export const getOffersByGig = async (gigId: string): Promise<Offer[]> => {
   try {
     return await offersCollection.find<Offer>({ gigId }).toArray();
   } catch (error) {
-    handleError(error as Error, "getOffersByGig");
+    if (error instanceof Error) handleError(error, "getOffersByGig");
   }
 };
 
@@ -158,7 +161,7 @@ export const getOffersByUser = async (submittedById: string): Promise<Offer[]> =
   try {
     return await offersCollection.find<Offer>({ submittedById }).toArray();
   } catch (error) {
-    handleError(error as Error, "getOffersByUser");
+    if (error instanceof Error) handleError(error, "getOffersByUser");
   }
 };
 
@@ -188,7 +191,7 @@ export const acceptOffer = async (id: string): Promise<{ gigId: string }> => {
 
     return { gigId: accepted.gigId };
   } catch (error) {
-    handleError(error as Error, "acceptOffer");
+    if (error instanceof Error) handleError(error, "acceptOffer");
   }
 };
 
@@ -207,37 +210,7 @@ export const declineOffer = async (id: string): Promise<void> => {
     );
     if (!result) throw new DatabaseError("Offer not found or not pending");
   } catch (error) {
-    handleError(error as Error, "declineOffer");
-  }
-};
-
-/**
- * deletes all offers for a given gig. called when a task is deleted.
- *
- * @param gigId - the mongodb objectid string of the gig
- * @throws {DatabaseError} if a db error occurs
- */
-export const deleteOffersByGig = async (gigId: string): Promise<void> => {
-  if (offersCollection === undefined) throw new DatabaseError("Collection not initialized");
-  try {
-    await offersCollection.deleteMany({ gigId });
-  } catch (error) {
-    handleError(error as Error, "deleteOffersByGig");
-  }
-};
-
-/**
- * deletes all offers submitted by a given user. called when a user is deleted.
- *
- * @param submittedById - the username of the user
- * @throws {DatabaseError} if a db error occurs
- */
-export const deleteOffersByUser = async (submittedById: string): Promise<void> => {
-  if (offersCollection === undefined) throw new DatabaseError("Collection not initialized");
-  try {
-    await offersCollection.deleteMany({ submittedById });
-  } catch (error) {
-    handleError(error as Error, "deleteOffersByUser");
+    if (error instanceof Error) handleError(error, "declineOffer");
   }
 };
 

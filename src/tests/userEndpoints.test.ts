@@ -55,7 +55,7 @@ test("creates a user successfully", async () => {
 test("fails to create user with invalid input", async () => {
     const res = await request(app).post("/users").send({...validUser, username: "ab" });
     expect(res.status).toBe(400);
-})
+});
 
 test("fails to create user with existing username", async () => {
     await request(app).post("/users").send(validUser);
