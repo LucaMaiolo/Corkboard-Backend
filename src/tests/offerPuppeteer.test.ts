@@ -60,7 +60,7 @@ const apiCreateTask = async (cookie: string, name: string, pay: number): Promise
     const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: cookie },
-        body: JSON.stringify({ name, description: "automated test gig", location: "Montreal", pay, timeInMins: 60 }),
+        body: JSON.stringify({ name, description: "automated test gig", location: "Montreal", pay, timeInMins: 60, status: "Available" }),
     });
     return ((await response.json()) as { _id: string })._id;
 }
@@ -70,14 +70,16 @@ const apiCreateTask = async (cookie: string, name: string, pay: number): Promise
  * @param cookie - offerer's session cookie
  * @param gigId - mongodb _id of the task to bid on
  * @param price - offered price
+ * @param listerId - username of the task owner
+ * @param submittedById - username of the offerer
  */
-const apiCreateOffer = async (cookie: string, gigId: string, price: number): Promise<void> => {
+const apiCreateOffer = async (cookie: string, gigId: string, price: number, listerId: string, submittedById: string): Promise<void> => {
     await fetch(`${API_URL}/offers`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: cookie },
-        body: JSON.stringify({ gigId, price }),
+        body: JSON.stringify({ gigId, price, listerId, submittedById }),
     });
-}
+};
 
 // browser helpers
 
@@ -116,7 +118,7 @@ beforeAll(async () => {
 
     // build a completed task (create, offer, accept) so status becomes Completed
     taskIdCompleted = await apiCreateTask(listerCookie, "Puppeteer Completed Gig", 100);
-    await apiCreateOffer(offererCookie, taskIdCompleted, 50);
+    await apiCreateOffer(offererCookie, taskIdCompleted, 50, lister.username, offerer.username);
     const offersOnCompleted = (await (await fetch(
         `${API_URL}/offers?gigId=${taskIdCompleted}`,
         { headers: { Cookie: listerCookie } },
@@ -129,7 +131,7 @@ beforeAll(async () => {
     }
 
     // pre-seed an offer on taskIdMain so read tests have data without depending on create tests
-    await apiCreateOffer(offererCookie, taskIdMain, 50);
+    await apiCreateOffer(offererCookie, taskIdMain, 50, lister.username, offerer.username);
 });
 
 afterAll(async () => {
@@ -160,7 +162,7 @@ test("offer create success: logged-in non-owner can submit a valid offer", async
         (button as HTMLButtonElement).click();
     });
     await page.waitForSelector("input[placeholder='Price']");
-    await page.click("input[placeholder='Price']", { clickCount: 3 });
+    await page.click("input[placeholder='Price']", { count: 3 });
     await page.type("input[placeholder='Price']", "40");
     await page.evaluate(() => {
         const button = [...document.querySelectorAll("button")].find((button) => button.textContent?.includes("Submit Offer"));
@@ -285,7 +287,7 @@ test("offer read success: offerer sees their submitted offers on my-offers", asy
 
 test("offer accept success: lister accepts offer and status updates to accepted", async () => {
     const offererCookie = await apiLogin(offerer.username, offerer.password);
-    await apiCreateOffer(offererCookie, taskIdForAccept, 50);
+    await apiCreateOffer(offererCookie, taskIdForAccept, 50, lister.username, offerer.username);
 
     await browserLogin(page, lister.username, lister.password);
     await page.goto(`${BASE_URL}/offers/${taskIdForAccept}`);
@@ -304,7 +306,7 @@ test("offer accept success: lister accepts offer and status updates to accepted"
 
 test("offer decline success: lister declines offer and status updates to declined", async () => {
     const offererCookie = await apiLogin(offerer.username, offerer.password);
-    await apiCreateOffer(offererCookie, taskIdForDecline, 50);
+    await apiCreateOffer(offererCookie, taskIdForDecline, 50, lister.username, offerer.username);
 
     await browserLogin(page, lister.username, lister.password);
     await page.goto(`${BASE_URL}/offers/${taskIdForDecline}`);
