@@ -1,0 +1,177 @@
+import "dotenv/config";
+import puppeteer, { type Browser, type BrowserContext, type ElementHandle, type Page } from "puppeteer";
+import { test, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+
+const BASE_URL = "http://localhost:5173";
+const API_URL = "http://localhost:1339";
+
+let browser: Browser;
+let context: BrowserContext;
+let page: Page;
+
+// ids set in beforeAll; tests that mutate state get their own task
+let taskIdMain: string;
+let taskIdForAccept: string;
+let taskIdForDecline: string;
+let taskIdCompleted: string;
+
+// timestamp suffix prevents duplicate username errors across test runs
+const run = Date.now();
+const lister = { username: `lister${run}`, password: "password123", email: `lister${run}@ptest.com`, birthday: "2000-01-01" };
+const offerer = { username: `offerer${run}`, password: "password123", email: `offerer${run}@ptest.com`, birthday: "2000-01-01" };
+
+// api helpers
+
+/**
+ * sends a json POST to the backend.
+ * @param path - route path, e.g. "/users"
+ * @param body - json-serializable payload
+ * @param cookie - optional "name=value" session cookie
+ */
+const apiPost = async (path: string, body: unknown, cookie?: string): Promise<Response> => {
+    return fetch(`${API_URL}${path}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(cookie !== undefined ? { Cookie: cookie } : {}),
+        },
+        body: JSON.stringify(body),
+    });
+}
+
+/**
+ * logs in via the api and returns just the "name=value" portion of the set-cookie header.
+ * @param username - account username
+ * @param password - account password
+ */
+const apiLogin = async (username: string, password: string): Promise<string> => {
+    const response = await apiPost("/session/login", { username, password });
+    // strip Path=/, HttpOnly, etc. so only the name=value pair is valid in a Cookie request header
+    return (response.headers.get("set-cookie") ?? "").split(";")[0]!;
+}
+
+/**
+ * creates a task via the api and returns its mongodb _id string.
+ * @param cookie - lister's session cookie
+ * @param name - task title
+ * @param pay - maximum payout for the gig
+ */
+const apiCreateTask = async (cookie: string, name: string, pay: number): Promise<string> => {
+    const response = await fetch(`${API_URL}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ name, description: "automated test gig", location: "Montreal", pay, timeInMins: 60 }),
+    });
+    return ((await response.json()) as { _id: string })._id;
+}
+
+/**
+ * submits an offer on a gig via the api.
+ * @param cookie - offerer's session cookie
+ * @param gigId - mongodb _id of the task to bid on
+ * @param price - offered price
+ */
+const apiCreateOffer = async (cookie: string, gigId: string, price: number): Promise<void> => {
+    await fetch(`${API_URL}/offers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: cookie },
+        body: JSON.stringify({ gigId, price }),
+    });
+}
+
+// browser helpers
+
+/**
+ * navigates to /login, fills the form, clicks submit, and waits for the reload that fires on success.
+ * @param loginPage - puppeteer page to interact with
+ * @param username - account username
+ * @param password - account password
+ */
+const browserLogin = async (loginPage: Page, username: string, password: string): Promise<void> => {
+    await loginPage.goto(`${BASE_URL}/login`);
+    await loginPage.waitForSelector("input[placeholder='Username']");
+    await loginPage.type("input[placeholder='Username']", username);
+    await loginPage.type("input[placeholder='Password']", password);
+    // successful login calls window.location.reload() which triggers a navigation event
+    await Promise.all([
+        loginPage.waitForNavigation({ waitUntil: "domcontentloaded" }),
+        loginPage.click("button"),
+    ]);
+}
+
+// lifecycle
+
+beforeAll(async () => {
+    browser = await puppeteer.launch({ headless: true });
+
+    await apiPost("/users", lister);
+    await apiPost("/users", offerer);
+
+    const listerCookie = await apiLogin(lister.username, lister.password);
+    const offererCookie = await apiLogin(offerer.username, offerer.password);
+
+    taskIdMain       = await apiCreateTask(listerCookie, "Puppeteer Main Gig",      100);
+    taskIdForAccept  = await apiCreateTask(listerCookie, "Puppeteer Accept Gig",    100);
+    taskIdForDecline = await apiCreateTask(listerCookie, "Puppeteer Decline Gig",   100);
+
+    // build a completed task (create, offer, accept) so status becomes Completed
+    taskIdCompleted = await apiCreateTask(listerCookie, "Puppeteer Completed Gig", 100);
+    await apiCreateOffer(offererCookie, taskIdCompleted, 50);
+    const offersOnCompleted = (await (await fetch(
+        `${API_URL}/offers?gigId=${taskIdCompleted}`,
+        { headers: { Cookie: listerCookie } },
+    )).json()) as { id: string }[];
+    if (offersOnCompleted[0] !== undefined) {
+        await fetch(`${API_URL}/offers/${offersOnCompleted[0].id}/accept`, {
+            method: "PUT",
+            headers: { Cookie: listerCookie },
+        });
+    }
+
+    // pre-seed an offer on taskIdMain so read tests have data without depending on create tests
+    await apiCreateOffer(offererCookie, taskIdMain, 50);
+});
+
+afterAll(async () => {
+    await browser.close();
+});
+
+// each test gets its own incognito context so cookies never cross between tests
+beforeEach(async () => {
+    context = await browser.createBrowserContext();
+    page = await context.newPage();
+});
+
+afterEach(async () => {
+    await context.close();
+});
+
+// offer create tests
+
+test("offer create success: logged-in non-owner can submit a valid offer", async () => {
+    await browserLogin(page, offerer.username, offerer.password);
+    await page.goto(`${BASE_URL}/tasks/${taskIdMain}`);
+    await page.waitForFunction(
+        () => [...document.querySelectorAll("button")].some((b) => b.textContent?.includes("Make an Offer")),
+        { timeout: 10000 },
+    );
+    await page.evaluate(() => {
+        const button = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Make an Offer"));
+        (button as HTMLButtonElement).click();
+    });
+    await page.waitForSelector("input[placeholder='Price']");
+    await page.click("input[placeholder='Price']", { clickCount: 3 });
+    await page.type("input[placeholder='Price']", "40");
+    await page.evaluate(() => {
+        const button = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Submit Offer"));
+        (button as HTMLButtonElement).click();
+    });
+    // onAdded() sets showOfferForm to false, so "Make an Offer" reappears on success
+    await page.waitForFunction(
+        () => [...document.querySelectorAll("button")].some((b) => b.textContent?.includes("Make an Offer")),
+        { timeout: 10000 },
+    );
+    const buttons = await page.$$("button");
+    const texts = await Promise.all(buttons.map((buttonHandle: ElementHandle<Element>) => buttonHandle.evaluate((element: Element) => element.textContent ?? "")));
+    expect(texts.some((text: string) => text.includes("Make an Offer"))).toBe(true);
+});
