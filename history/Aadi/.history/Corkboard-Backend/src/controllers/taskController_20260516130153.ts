@@ -1,11 +1,10 @@
 import Express from "express";
 import type { Request, Response } from "express";
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 import * as model from "../models/taskModelMongoDb.js";
 import { DatabaseError } from "../models/DatabaseError.js";
 import { InvalidInputError } from "../models/InvalidInputError.js";
 import { authenticateUser } from "./sessionController.js";
-import { Task } from "../models/taskModelMongoDb.js";
 
 const router = Express.Router();
 const routeRoot = "/tasks";
@@ -49,11 +48,11 @@ async function addTask(request: Request, response: Response): Promise<void> {
     response.status(201).send(result);
   } catch (error: unknown) {
     if (error instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input:${error.message}`);
+      response.status(400).send("Invalid input:" + error.message);
     } else if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+      response.status(500).send("Database error:" + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -79,9 +78,9 @@ async function getAllTasks(
     response.send(result);
   } catch (error: unknown) {
     if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+      response.status(500).send("Database error:" + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -116,14 +115,16 @@ async function getTaskById(
   }
   try {
     const result = await model.getTaskById(id);
+    if (!result) {
+      response.status(404).send("Task not found");
+      return;
+    }
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof DatabaseError && error.message === "Task not found") {
-      response.status(404).send("Task not found");
-    } else if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+    if (error instanceof DatabaseError) {
+      response.status(500).send("Database error:" + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -170,15 +171,9 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     response.status(400).send("Invalid id");
     return;
   }
-  let task: WithId<Task>;
-  try {
-    task = await model.getTaskById(id);
-  } catch (error) {
-    if (error instanceof DatabaseError && error.message === "Task not found") {
-      response.status(404).send("Task not found");
-      return;
-    }
-    response.status(500).send("Database error");
+  const task = await model.getTaskById(id);
+  if (!task) {
+    response.status(404).send("Task not found");
     return;
   }
 
@@ -200,18 +195,16 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     });
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof InvalidInputError) {
-      response.status(400).send("Invalid input:" + error.message);
-    } else if (error instanceof DatabaseError) {
+    if (error instanceof DatabaseError) {
       if (
         error.message.includes("Update failed, no task found with the given id")
       ) {
-        response.status(404).send(`Task not found:${error.message}`);
+        response.status(404).send("Task not found:" + error.message);
       } else {
-        response.status(500).send(`Database error:${error.message}`);
+        response.status(500).send("Database error:" + error.message);
       }
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -219,20 +212,15 @@ async function updateTask(request: Request, response: Response): Promise<void> {
 }
 
 /**
- * `DELETE /tasks/:id` -Permanently delete a task
+ * Handles deleting a task from the database by name
+ * @param request - Expressing request object. Reads the following:
+ *  request.params.name - the name of the task to delete
  *
- * Only the task lister or an admin may delete it
- *
- * URL parameters:
- * -id: MongoDB ObjectId of the task
- *
- * Responses:
- * -200: Task deleted
- * -400: Invalid ID
- * -401: Request did not have a valid session
- * -403: Authenticated user is neither the lister or an admin
- * -404: Task not found
- * -500:  Server or database error
+ * @param response - Express response object:
+ *  200 with the deleted task name on success
+ *  400 if name is invalid
+ *  404 if no task with the given name is found
+ *  500 if an unexpected error occurs
  */
 router.delete("/:id", deleteTask);
 async function deleteTask(request: Request, response: Response): Promise<void> {
@@ -248,17 +236,12 @@ async function deleteTask(request: Request, response: Response): Promise<void> {
     response.status(400).send("Invalid id");
     return;
   }
-  let task: WithId<Task>;
-  try {
-    task = await model.getTaskById(id);
-  } catch (error) {
-    if (error instanceof DatabaseError && error.message === "Task not found") {
-      response.status(404).send("Task not found");
-      return;
-    }
-    response.status(500).send("Database error");
+  const task = await model.getTaskById(id);
+  if (!task) {
+    response.status(404).send("Task not found");
     return;
   }
+
   if (
     !auth.userSession.isAdmin &&
     task.listerId !== auth.userSession.username
@@ -271,19 +254,19 @@ async function deleteTask(request: Request, response: Response): Promise<void> {
     response.status(200).send(`Task deleted: id=${request.params.id}`);
   } catch (error: unknown) {
     if (error instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input:${error.message}`);
+      response.status(400).send("Invalid input:" + error.message);
     } else if (error instanceof DatabaseError) {
       if (
         error.message.includes(
           "Delete failed, no task found with the given name",
         )
       ) {
-        response.status(404).send(`Task not found:${error.message}`);
+        response.status(404).send("Task not found:" + error.message);
       } else {
-        response.status(500).send(`Database error:${error.message}`);
+        response.status(500).send("Database error:" + error.message);
       }
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }

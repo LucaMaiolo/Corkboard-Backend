@@ -49,11 +49,11 @@ async function addTask(request: Request, response: Response): Promise<void> {
     response.status(201).send(result);
   } catch (error: unknown) {
     if (error instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input:${error.message}`);
+      response.status(400).send("Invalid input:" + error.message);
     } else if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+      response.status(500).send("Database error:" + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -79,9 +79,9 @@ async function getAllTasks(
     response.send(result);
   } catch (error: unknown) {
     if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+      response.status(500).send("Database error:" + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -121,9 +121,9 @@ async function getTaskById(
     if (error instanceof DatabaseError && error.message === "Task not found") {
       response.status(404).send("Task not found");
     } else if (error instanceof DatabaseError) {
-      response.status(500).send(`Database error:${error.message}`);
+      response.status(500).send("Database error: " + error.message);
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -200,18 +200,16 @@ async function updateTask(request: Request, response: Response): Promise<void> {
     });
     response.status(200).json(result);
   } catch (error: unknown) {
-    if (error instanceof InvalidInputError) {
-      response.status(400).send("Invalid input:" + error.message);
-    } else if (error instanceof DatabaseError) {
+    if (error instanceof DatabaseError) {
       if (
         error.message.includes("Update failed, no task found with the given id")
       ) {
-        response.status(404).send(`Task not found:${error.message}`);
+        response.status(404).send("Task not found:" + error.message);
       } else {
-        response.status(500).send(`Database error:${error.message}`);
+        response.status(500).send("Database error:" + error.message);
       }
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }
@@ -271,19 +269,19 @@ async function deleteTask(request: Request, response: Response): Promise<void> {
     response.status(200).send(`Task deleted: id=${request.params.id}`);
   } catch (error: unknown) {
     if (error instanceof InvalidInputError) {
-      response.status(400).send(`Invalid input:${error.message}`);
+      response.status(400).send("Invalid input:" + error.message);
     } else if (error instanceof DatabaseError) {
       if (
         error.message.includes(
           "Delete failed, no task found with the given name",
         )
       ) {
-        response.status(404).send(`Task not found:${error.message}`);
+        response.status(404).send("Task not found:" + error.message);
       } else {
-        response.status(500).send(`Database error:${error.message}`);
+        response.status(500).send("Database error:" + error.message);
       }
     } else if (error instanceof Error) {
-      response.status(500).send(`Unexpected error: ${error.message}`);
+      response.status(500).send("Unexpected error: " + error.message);
     } else {
       response.status(500).send("Unexpected error occurred");
     }

@@ -1,0 +1,54 @@
+import { MongoMemoryServer } from "mongodb-memory-server";
+import { ObjectId } from "mongodb";
+import * as model from "../models/taskModelMongoDb.js";
+import type {Task, Status as TaskStatus} from "../models/taskModelMongoDb.js";
+import { DatabaseError } from "../models/DatabaseError.js";
+import { InvalidInputError } from "../models/InvalidInputError.js";
+
+vi.setConfig({ testTimeout: 5_000});
+let mongod: MongoMemoryServer;
+
+const validTask: Task = {
+    listerId: "user123",
+    name: "FixSink",
+    description: "This is a valid task description",
+    location: "Montreal",
+    pay: 25,
+    timeInMins: 60,
+    status: "Available" as TaskStatus,
+};
+
+beforeAll(async () => {
+  mongod = await MongoMemoryServer.create();
+  console.log("Mock Database started");
+});
+
+afterAll(async () => {
+  await mongod.stop();
+  console.log("Mock Database stopped");
+});
+
+beforeEach(async () => {
+  try {
+    const url: string = mongod.getUri();
+    await model.initialize("testDb", true, "tasks", url);
+    process.env = Object.assign(process.env, { CUSTOM_VAR: "value" });
+  } catch (err: unknown) {
+    if (err instanceof Error) console.log(err.message);
+    else console.log("Unknown error during beforeEach in unit tests");
+  }
+});
+
+afterEach(async () => {
+  await model.close();
+});
+
+//AddTask
+
+test("addTask: inserts a valid task and returns it with an _id", async() => {
+    const result = await model.addTask(validTask);
+    expect(result._id).toBeInstanceOf(ObjectId);
+    expect(result.name).toBe(validTask.name);
+});
+
+tests("")
